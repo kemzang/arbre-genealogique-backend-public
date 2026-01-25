@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum MemberStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum VoteType {
+  APPROVE
+  REJECT
+}
+
+enum Gender {
+  M
+  F
+  O
+}
+
+enum RelationshipType {
+  PARENTAL
+  UNION
+  SIBLING
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  displayName  String?  @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  members      Member[]
+  linkedPersons Person[] @relation("UserLinkedPersons")
+  messages     Message[]
+  uploadedMedia Media[]
+  validationsGiven MembershipValidation[] @relation("ValidationsByUser")
+
+  @@map("users")
+}
+
+model Family {
+  id         Int       @id @default(autoincrement())
+  familyName String    @map("family_name")
+  logoUrl    String?   @map("logo_url")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  members    Member[]
+  persons    Person[]
+  chatRooms  ChatRoom[]
+  events     FamilyEvent[]
+  media      Media[]
+
+  @@map("families")
+}
+
+model Member {
+  id        Int          @id @default(autoincrement())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int          @map("user_id")
+  family    Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId  Int          @map("family_id")
+  role      Role         @default(VIEWER)
+  status    MemberStatus @default(PENDING)
+  joinedAt  DateTime     @default(now()) @map("joined_at")
+
+  validations MembershipValidation[] @relation("targetValidations")
+
+  @@map("members")
+}
+
+model MembershipValidation {
+  id             Int     @id @default(autoincrement())
+  targetMember   Member  @relation("targetValidations", fields: [targetMemberId], references: [id], onDelete: Cascade)
+  targetMemberId Int     @map("target_member_id")
+  validator      User    @relation("ValidationsByUser", fields: [validatorId], references: [id], onDelete: Cascade)
+  validatorId    Int     @map("validator_id")
+  voteType       VoteType @map("vote_type")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([targetMemberId, validatorId])
+  @@map("membership_validations")
+}
+
+model Person {
+  id           Int       @id @default(autoincrement())
+  family       Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId     Int       @map("family_id")
+  firstName    String?   @map("first_name")
+  lastName     String?   @map("last_name")
+  birthDate    DateTime? @map("birth_date")
+  deathDate    DateTime? @map("death_date")
+  gender       Gender?
+  bio          String?
+  linkedUser   User?     @relation("UserLinkedPersons", fields: [linkedUserId], references: [id], onDelete: SetNull)
+  linkedUserId Int?      @map("linked_user_id")
+
+  relationshipsA Relationship[] @relation("relA")
+  relationshipsB Relationship[] @relation("relB")
+  media           Media[]
+
+  @@map("persons")
+}
+
+model Relationship {
+  id            Int              @id @default(autoincrement())
+  personA       Person           @relation("relA", fields: [personAId], references: [id], onDelete: Cascade)
+  personAId     Int              @map("person_a_id")
+  personB       Person           @relation("relB", fields: [personBId], references: [id], onDelete: Cascade)
+  personBId     Int              @map("person_b_id")
+  type          RelationshipType @map("type")
+  isBiological  Boolean          @default(true) @map("is_biological")
+
+  @@map("relationships")
+}
+
+model ChatRoom {
+  id       Int      @id @default(autoincrement())
+  family   Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId Int      @map("family_id")
+  name     String?
+  messages Message[]
+
+  @@map("chat_rooms")
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  chatRoomId Int      @map("chat_room_id")
+  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   Int      @map("sender_id")
+  content    String?
+  sentAt     DateTime @default(now()) @map("sent_at")
+
+  @@map("messages")
+}
+
+model FamilyEvent {
+  id        Int       @id @default(autoincrement())
+  family    Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId  Int       @map("family_id")
+  title     String?
+  eventDate DateTime? @map("event_date")
+  location  String?   @map("location")
+  media     Media[]
+
+  @@map("family_events")
+}
+
+model Media {
+  id         Int         @id @default(autoincrement())
+  family     Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId   Int         @map("family_id")
+  uploader   User        @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  uploaderId Int         @map("uploader_id")
+  person     Person?     @relation(fields: [personId], references: [id], onDelete: SetNull)
+  personId   Int?        @map("person_id")
+  event      FamilyEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  eventId    Int?        @map("event_id")
+  urlPath    String      @map("url_path")
+  mediaType  MediaType   @map("media_type")
+
+  @@map("media")
+}
