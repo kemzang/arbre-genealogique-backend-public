@@ -86,6 +86,7 @@ model Member {
   role      Role         @default(VIEWER)
   status    MemberStatus @default(PENDING)
   joinedAt  DateTime     @default(now()) @map("joined_at")
+  applicationData Json?  @map("application_data")
 
   validations MembershipValidation[] @relation("targetValidations")
 
