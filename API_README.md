@@ -198,6 +198,15 @@ Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `is
 }
 ```
 
+### Workflow : Constituer son arbre
+Pour créer des liens (père, mère, enfant), la procédure est séquentielle :
+1. **Créer les personnes** individuellement via `POST /api/person` et récupérer leurs IDs (ex: IdPère=10, IdMère=11, IdEnfant=12).
+2. **Créer les relations** via `POST /api/relationship` en utilisant ces IDs :
+   - Pour lier le Père à l'Enfant : `personAId: 10`, `personBId: 12`, `type: "PARENTAL"`
+   - Pour lier la Mère à l'Enfant : `personAId: 11`, `personBId: 12`, `type: "PARENTAL"`
+   - Pour lier les Parents (optionnel) : `personAId: 10`, `personBId: 11`, `type: "UNION"`
+```
+
 ### `POST /api/person`
 **Rôle :** Ajouter une nouvelle fiche de personne dans l'arbre.
 **Body :**
@@ -251,6 +260,9 @@ Objet `Media` créé.
 ### `GET /api/family/[familyId]/media`
 **Rôle :** Lister tous les médias d'une famille.
 **URL :** Remplacer `[familyId]` par l'ID de la famille, ex: `/api/family/1/media`
+**Query Params :**
+- `type` (Optionnel) : Filtrer par type (`IMAGE`, `VIDEO`, `FILE`)
+- `chatRoomId` (Optionnel) : Filtrer les médias partagés dans une room spécifique
 **Réponse (200 OK) :**
 ```json
 [
@@ -269,16 +281,18 @@ Objet `Media` créé.
 ## Chat
 
 ### `POST /api/chat/message`
-**Rôle :** Envoyer un message dans une chat room.
+**Rôle :** Envoyer un message dans une chat room. Supporte le texte, les médias (images, vidéos, fichiers), ou les deux.
+**Pré-requis :** Si on envoie des médias, ils doivent d'abord être uploadés via `/api/media/upload` pour obtenir leurs IDs.
 **Body :**
 ```json
 {
   "chatRoomId": 1,
-  "content": "Bonjour la famille !"
+  "content": "Bonjour la famille ! Voici des photos.", // Optionnel si attachments présent
+  "attachmentIds": [1, 2, 3] // Optionnel, liste des IDs de médias préalablement uploadés
 }
 ```
 **Réponse (201 Created) :**
-Objet `Message` créé.
+Objet `Message` créé, incluant les attachements (tableau `attachments`).
 
 ### `GET /api/chat/messages?chatRoomId=...`
 **Rôle :** Récupérer l'historique des messages d'une salle.
@@ -294,7 +308,14 @@ Objet `Message` créé.
       "id": 1,
       "displayName": "Jean",
       "email": "..."
-    }
+    },
+    "attachments": [
+       {
+         "id": 5,
+         "urlPath": "...",
+         "mediaType": "IMAGE"
+       }
+    ]
   }
 ]
 ```

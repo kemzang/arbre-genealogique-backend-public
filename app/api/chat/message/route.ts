@@ -11,9 +11,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const chatRoomId: number = body.chatRoomId;
     const content: string = body.content;
-    if (!chatRoomId || !content)
+    const attachmentIds: number[] = body.attachmentIds || [];
+
+    if (!chatRoomId || (!content && attachmentIds.length === 0))
       return NextResponse.json(
-        { error: "chatRoomId and content required" },
+        { error: "chatRoomId and content or attachments required" },
         { status: 400 },
       );
 
@@ -32,8 +34,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const message = await prisma.message.create({
-      data: { chatRoomId, senderId: user.id, content },
+      data: {
+        chatRoomId,
+        senderId: user.id,
+        content,
+        attachments: attachmentIds.length > 0 ? {
+          connect: attachmentIds.map(id => ({ id }))
+        } : undefined
+      },
+      include: {
+        attachments: true
+      }
     });
+
     return NextResponse.json(message, { status: 201 });
   } catch (err) {
     console.error(err);

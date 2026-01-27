@@ -25,8 +25,22 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const url = new URL(req.url);
+    const type = url.searchParams.get("type");
+    const chatRoomId = url.searchParams.get("chatRoomId");
+
+    const where: any = { familyId: fId };
+    if (type) {
+      if (["IMAGE", "VIDEO", "FILE"].includes(type)) {
+        where.mediaType = type;
+      }
+    }
+    if (chatRoomId) {
+       where.message = { chatRoomId: Number(chatRoomId) };
+    }
+
     const media = await prisma.media.findMany({
-      where: { familyId: fId },
+      where,
       include: {
         uploader: { select: { displayName: true } },
         person: { select: { firstName: true, lastName: true } },

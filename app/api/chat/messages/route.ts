@@ -33,7 +33,10 @@ export async function GET(req: Request) {
 
     const messages = await prisma.message.findMany({
       where: { chatRoomId },
-      include: { sender: true },
+      include: {
+        sender: true, 
+        attachments: true 
+      },
       orderBy: { sentAt: "asc" },
       take: 500,
     });

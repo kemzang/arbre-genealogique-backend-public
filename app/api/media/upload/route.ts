@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const familyId: number = body.familyId;
     const personId: number | undefined = body.personId;
     const urlPath: string = body.urlPath;
-    const mediaType: "IMAGE" | "VIDEO" = body.mediaType || "IMAGE";
+    const mediaType: "IMAGE" | "VIDEO" | "FILE" = body.mediaType || "IMAGE";
 
     if (!familyId || !urlPath)
       return NextResponse.json(

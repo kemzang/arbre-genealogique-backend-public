@@ -44,6 +44,7 @@ enum RelationshipType {
 enum MediaType {
   IMAGE
   VIDEO
+  FILE
 }
 
 model User {
@@ -156,6 +157,7 @@ model Message {
   senderId   Int      @map("sender_id")
   content    String?
   sentAt     DateTime @default(now()) @map("sent_at")
+  attachments Media[]
 
   @@map("messages")
 }
@@ -182,6 +184,8 @@ model Media {
   personId   Int?        @map("person_id")
   event      FamilyEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   eventId    Int?        @map("event_id")
+  message    Message?    @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  messageId  Int?        @map("message_id")
   urlPath    String      @map("url_path")
   mediaType  MediaType   @map("media_type")
 
