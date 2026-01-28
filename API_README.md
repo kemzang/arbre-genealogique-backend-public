@@ -319,3 +319,73 @@ Objet `Message` créé, incluant les attachements (tableau `attachments`).
   }
 ]
 ```
+
+### `GET /api/chat/rooms?familyId=...`
+**Rôle :**  Lister les salons de discussion visibles pour l'utilisateur dans une famille (Publics + Privés dont il est membre).
+**Query Params :** `familyId`
+**Réponse (200 OK) :**
+```json
+[
+  {
+    "id": 1,
+    "name": "Général",
+    "channelType": "PUBLIC",
+    "_count": { "messages": 12 },
+    "participants": [...]
+  },
+  {
+    "id": 2,
+    "name": "Secret",
+    "channelType": "PRIVATE",
+    "_count": { "messages": 5 }
+  }
+]
+```
+
+### `POST /api/chat/rooms`
+**Rôle :** Créer un nouveau salon de discussion.
+**Body :**
+```json
+{
+  "familyId": 1,
+  "name": "Projet Vacances",
+  "description": "Discussion pour l'été 2024", // Optionnel
+  "avatarUrl": "https://...", // Optionnel
+  "isPrivate": true, // Optionnel (défaut: false)
+  "participantIds": [2, 3, 4] // Optionnel, IDs des utilisateurs membres à inclure dès le début
+}
+```
+**Réponse (201 Created) :** Objet `ChatRoom` avec `participants`.
+
+### `PUT /api/chat/rooms`
+**Rôle :** Mettre à jour un salon (Nom, Description, Avatar, Visibilité). Réservé au créateur (ADMIN du salon).
+**Body :**
+```json
+{
+  "chatRoomId": 10,
+  "name": "Nouveau Nom",
+  "description": "Nouvelle description",
+  "avatarUrl": "...",
+  "channelType": "PRIVATE" // ou "PUBLIC"
+}
+```
+
+### `POST /api/chat/rooms/participants`
+**Rôle :** Ajouter un membre à un salon privé existant. Réservé à l'ADMIN du salon.
+**Body :**
+```json
+{
+  "chatRoomId": 10,
+  "userIdToAdd": 5
+}
+```
+
+### `DELETE /api/chat/rooms/participants`
+**Rôle :** Retirer un membre d'un salon. Réservé à l'ADMIN du salon.
+**Body :**
+```json
+{
+  "chatRoomId": 10,
+  "userIdToRemove": 5
+}
+```

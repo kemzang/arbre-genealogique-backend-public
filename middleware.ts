@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const origin = request.headers.get('origin') ?? ''
   
   // Liste des origines autorisées
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173']
+  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://localhost:5174']
   
   // Vérifier si l'origine est autorisée
   const isAllowed = allowedOrigins.includes(origin) || !origin // !origin pour les requêtes serveur à serveur ou Postman

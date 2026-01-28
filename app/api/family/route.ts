@@ -19,6 +19,14 @@ export async function POST(req: Request) {
 
     const family = await prisma.family.create({ data: { familyName } });
 
+    // Create default chat room
+    await prisma.chatRoom.create({
+      data: {
+        familyId: family.id,
+        name: "Général",
+      },
+    });
+
     await prisma.member.create({
       data: {
         userId: user.id,

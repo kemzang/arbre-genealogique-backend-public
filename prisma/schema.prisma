@@ -10,6 +10,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -59,6 +60,8 @@ model User {
   messages     Message[]
   uploadedMedia Media[]
   validationsGiven MembershipValidation[] @relation("ValidationsByUser")
+  chatRoomParticipations ChatRoomParticipant[]
+  createdChatRooms ChatRoom[] @relation("ChatRoomCreator")
 
   @@map("users")
 }
@@ -139,14 +142,46 @@ model Relationship {
   @@map("relationships")
 }
 
+enum ChannelType {
+  PUBLIC
+  PRIVATE
+}
+
+enum ChatRole {
+  ADMIN
+  MEMBER
+}
+
 model ChatRoom {
-  id       Int      @id @default(autoincrement())
-  family   Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  familyId Int      @map("family_id")
-  name     String?
-  messages Message[]
+  id           Int         @id @default(autoincrement())
+  family       Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId     Int         @map("family_id")
+  name         String?
+  description  String?
+  avatarUrl    String?     @map("avatar_url")
+  channelType  ChannelType @default(PUBLIC) @map("channel_type")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  
+  creator      User?       @relation("ChatRoomCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  creatorId    Int?        @map("creator_id")
+
+  messages     Message[]
+  participants ChatRoomParticipant[]
 
   @@map("chat_rooms")
+}
+
+model ChatRoomParticipant {
+  id         Int      @id @default(autoincrement())
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  chatRoomId Int      @map("chat_room_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int      @map("user_id")
+  role       ChatRole @default(MEMBER)
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  @@unique([chatRoomId, userId])
+  @@map("chat_room_participants")
 }
 
 model Message {

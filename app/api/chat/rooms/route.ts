@@ -26,10 +26,25 @@ export async function GET(req: Request) {
     }
 
     const rooms = await prisma.chatRoom.findMany({
-      where: { familyId },
+      where: {
+        familyId,
+        OR: [
+          { channelType: "PUBLIC" },
+          {
+            channelType: "PRIVATE",
+            participants: {
+              some: { userId: user.id }
+            }
+          }
+        ]
+      },
       include: {
-        // Optional: include last message or unread count if needed
-        _count: { select: { messages: true } }
+        _count: { select: { messages: true } },
+        participants: {
+          include: {
+             user: { select: { id: true, displayName: true } }
+          }
+        }
       }
     });
 
@@ -50,6 +65,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const familyId: number = body.familyId;
     const name: string = body.name;
+    const isPrivate: boolean = body.isPrivate || false;
+    const participantIds: number[] = body.participantIds || [];
 
     if (!familyId || !name) {
       return NextResponse.json({ error: "familyId and name required" }, { status: 400 });
@@ -63,16 +80,73 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Prepare participants: always include creator as ADMIN
+    const finalParticipantIds = new Set(participantIds.filter((id) => id !== user.id));
+    
+    const participantsData = [
+      { userId: user.id, role: "ADMIN" as const }, // Author is ADMIN
+      ...Array.from(finalParticipantIds).map(uid => ({ userId: uid, role: "MEMBER" as const }))
+    ];
+
     const room = await prisma.chatRoom.create({
       data: {
         familyId,
         name,
+        description: body.description ?? null,
+        avatarUrl: body.avatarUrl ?? null,
+        channelType: isPrivate ? "PRIVATE" : "PUBLIC",
+        creatorId: user.id,
+        participants: {
+          create: participantsData
+        }
       },
+      include: {
+        participants: true
+      }
     });
 
     return NextResponse.json(room, { status: 201 });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to create chat room" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const body = await req.json();
+    const { chatRoomId, name, description, avatarUrl, channelType } = body;
+
+    if (!chatRoomId) {
+      return NextResponse.json({ error: "chatRoomId required" }, { status: 400 });
+    }
+
+    // Check if user is ADMIN of the room
+    const participant = await prisma.chatRoomParticipant.findFirst({
+        where: { chatRoomId, userId: user.id, role: "ADMIN" }
+    });
+
+    if (!participant) {
+        return NextResponse.json({ error: "Forbidden: Only Room Admin can edit" }, { status: 403 });
+    }
+
+    const updatedRoom = await prisma.chatRoom.update({
+      where: { id: chatRoomId },
+      data: {
+        name,
+        description,
+        avatarUrl,
+        channelType // Can switch PUBLIC <-> PRIVATE
+      }
+    });
+
+    return NextResponse.json(updatedRoom);
+
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to update chat room" }, { status: 500 });
   }
 }
