@@ -56,10 +56,37 @@ export async function POST(req: Request) {
       where: { targetMemberId, voteType: "APPROVE" },
     });
     if (approvals >= 3) {
-      await prisma.member.update({
+      const activeMember = await prisma.member.update({
         where: { id: targetMemberId },
         data: { status: "ACTIVE" },
       });
+
+      // Automatically add to ALL Public chat rooms of the family
+      const publicRooms = await prisma.chatRoom.findMany({
+        where: {
+          familyId: activeMember.familyId,
+          channelType: "PUBLIC"
+        }
+      });
+
+      if (publicRooms.length > 0) {
+        await Promise.all(publicRooms.map(room => 
+          prisma.chatRoomParticipant.upsert({
+            where: {
+              chatRoomId_userId: {
+                chatRoomId: room.id,
+                userId: activeMember.userId
+              }
+            },
+            update: {},
+            create: {
+              chatRoomId: room.id,
+              userId: activeMember.userId,
+              role: "MEMBER"
+            }
+          })
+        ));
+      }
     }
 
     return NextResponse.json({ success: true });

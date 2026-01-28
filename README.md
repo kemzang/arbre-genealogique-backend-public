@@ -1,36 +1,184 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌳 Arbre Généalogique - Application Familiale
 
-## Getting Started
+Une application web complète pour gérer votre arbre généalogique, partager des photos et communiquer avec votre famille.
 
-First, run the development server:
+## ✨ Fonctionnalités
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- 👥 **Gestion de famille** : Créez ou rejoignez une famille avec système de validation
+- 🌲 **Arbre généalogique** : Construisez et visualisez votre arbre familial
+- 💬 **Chat en temps réel** : Salons de discussion publics et privés
+- 📸 **Partage de médias** : Upload et partage de photos, vidéos et documents
+- 🔐 **Authentification sécurisée** : Système de connexion avec JWT
+- 👤 **Profils personnalisés** : Fiches détaillées pour chaque membre de la famille
+
+## 🚀 Démarrage rapide
+
+### Prérequis
+- Node.js 20+
+- MySQL 8.0+
+- npm
+
+### Installation
+
+1. **Cloner le projet**
+   ```bash
+   git clone <url-du-repo>
+   cd arbre_genealogique
+   ```
+
+2. **Installer les dépendances**
+   ```bash
+   npm install
+   ```
+
+3. **Configurer la base de données**
+   
+   Créez une base de données MySQL :
+   ```sql
+   CREATE DATABASE family_tree CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
+4. **Configurer les variables d'environnement**
+   
+   Créez un fichier `.env` à la racine :
+   ```env
+   DATABASE_URL="mysql://root@localhost:3306/family_tree"
+   JWT_SECRET="change_me_to_a_strong_secret"
+   ```
+
+5. **Initialiser la base de données**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+6. **Lancer le serveur**
+   ```bash
+   npm run dev
+   ```
+
+L'application sera accessible sur **http://localhost:3001**
+
+## 📚 Documentation
+
+- **[SETUP.md](./SETUP.md)** - Guide complet d'installation et de configuration
+- **[API_README.md](./API_README.md)** - Documentation complète de l'API backend
+
+## 🛠️ Technologies utilisées
+
+- **Frontend** : Next.js 16, React 19, TailwindCSS
+- **Backend** : Next.js API Routes
+- **Base de données** : MySQL + Prisma ORM 6.x
+- **Authentification** : JWT (jsonwebtoken)
+- **Upload de fichiers** : Système local (public/uploads)
+
+## 📁 Structure du projet
+
+```
+arbre_genealogique/
+├── app/                    # Application Next.js
+│   ├── api/               # Endpoints API
+│   │   ├── users/        # Authentification
+│   │   ├── family/       # Gestion des familles
+│   │   ├── chat/         # Messagerie
+│   │   └── media/        # Upload de fichiers
+│   └── ...
+├── lib/                   # Utilitaires
+│   ├── prisma.ts         # Client Prisma
+│   └── auth.ts           # Helpers JWT
+├── prisma/               # Configuration BDD
+│   └── schema.prisma     # Schéma de données
+├── public/
+│   └── uploads/          # Fichiers uploadés
+└── .env                  # Configuration (à créer)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔑 Endpoints principaux
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Authentification
+- `POST /api/users` - Créer un compte
+- `POST /api/users/login` - Se connecter
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Famille
+- `POST /api/family` - Créer une famille
+- `POST /api/family/join` - Rejoindre une famille
+- `GET /api/family/search` - Rechercher des familles
 
-## Learn More
+### Arbre généalogique
+- `GET /api/tree` - Récupérer l'arbre
+- `POST /api/person` - Ajouter une personne
+- `POST /api/relationship` - Créer une relation
 
-To learn more about Next.js, take a look at the following resources:
+### Chat
+- `GET /api/chat/rooms` - Liste des salons
+- `POST /api/chat/message` - Envoyer un message
+- `GET /api/chat/messages` - Historique des messages
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Médias
+- `POST /api/media/upload` - Uploader un fichier (FormData)
+- `GET /api/family/[familyId]/media` - Liste des médias
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+📖 **Documentation complète** : Voir [API_README.md](./API_README.md)
 
-## Deploy on Vercel
+## 🔧 Commandes utiles
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Développement
+npm run dev              # Serveur de développement
+npm run build            # Build production
+npm run start            # Lancer en production
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Base de données
+npx prisma studio        # Interface graphique BDD
+npx prisma generate      # Régénérer le client Prisma
+npx prisma db push       # Synchroniser le schéma
+npx prisma migrate dev   # Créer une migration
+```
+
+## 🐛 Problèmes courants
+
+### Erreur Prisma
+Si vous avez une erreur `PrismaClientConstructorValidationError`, vérifiez votre version :
+```bash
+npm list @prisma/client
+```
+Vous devez avoir Prisma 6.x (pas 7.x).
+
+### Erreur d'upload
+L'endpoint `/api/media/upload` accepte du **FormData**, pas du JSON :
+```javascript
+const formData = new FormData();
+formData.append('file', fileInput.files[0]);
+formData.append('familyId', '1');
+```
+
+Plus de détails dans [SETUP.md](./SETUP.md)
+
+## 🔐 Sécurité
+
+⚠️ **En production** :
+- Changez `JWT_SECRET` par une valeur forte et aléatoire
+- Utilisez HTTPS
+- Configurez les CORS
+- Limitez la taille des uploads
+- Utilisez un service cloud pour les fichiers (S3, Cloudinary)
+
+## 📝 Changelog
+
+### 2026-01-28
+- ✅ Upload de fichiers via FormData
+- ✅ Configuration MySQL avec Prisma 6.x
+- ✅ Système de chat avec salons publics/privés
+- ✅ Gestion complète de l'arbre généalogique
+
+## 📄 Licence
+
+Ce projet est sous licence MIT.
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
+
+---
+
+**Développé avec ❤️ pour les familles**

@@ -19,12 +19,34 @@ export async function POST(req: Request) {
 
     const family = await prisma.family.create({ data: { familyName } });
 
-    // Create default chat room
-    await prisma.chatRoom.create({
+    // 1. Create "Général" chat room
+    const generalRoom = await prisma.chatRoom.create({
       data: {
         familyId: family.id,
         name: "Général",
+        description: `Salon de discussion général de la famille ${familyName}`,
+        channelType: "PUBLIC",
+        creatorId: user.id
       },
+    });
+
+    // 2. Create "Family Name" chat room
+    const familyRoom = await prisma.chatRoom.create({
+      data: {
+        familyId: family.id,
+        name: `Famille ${familyName}`,
+        description: `Salon officiel dédié à la lignée ${familyName}`,
+        channelType: "PUBLIC",
+        creatorId: user.id
+      },
+    });
+
+    // Add creator as a participant to both rooms
+    await prisma.chatRoomParticipant.createMany({
+      data: [
+        { chatRoomId: generalRoom.id, userId: user.id, role: "ADMIN" },
+        { chatRoomId: familyRoom.id, userId: user.id, role: "ADMIN" }
+      ]
     });
 
     await prisma.member.create({

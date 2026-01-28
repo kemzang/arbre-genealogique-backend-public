@@ -2,6 +2,47 @@
 
 Ce document recense tous les endpoints disponibles dans le backend, leur rôle, le format du corps de la requête (body) attendu et le format de la réponse.
 
+## ⚙️ Configuration
+
+### Base de données
+- **Type** : MySQL
+- **ORM** : Prisma 6.x
+- **Connexion** : Configurée via la variable d'environnement `DATABASE_URL`
+
+### Variables d'environnement (`.env`)
+```env
+DATABASE_URL="mysql://root@localhost:3306/family_tree"
+JWT_SECRET="change_me_to_a_strong_secret"
+```
+
+### Versions importantes
+- **Prisma** : 6.19.2 (⚠️ Ne pas upgrader vers Prisma 7.x sans migration)
+- **Next.js** : 16.1.4
+- **Node.js** : 20+
+
+### Structure des fichiers uploadés
+- **Dossier** : `public/uploads/`
+- **Format des noms** : `{timestamp}-{filename}` (ex: `1738065123456-photo.jpg`)
+- **Accès** : Les fichiers sont accessibles via `/uploads/{filename}`
+
+---
+
+## 📝 Changelog récent
+
+### 2026-01-28 - Upload de fichiers
+- ✅ Modification de `/api/media/upload` pour accepter les fichiers via FormData
+- ✅ Sauvegarde automatique des fichiers dans `public/uploads/`
+- ✅ Génération de noms de fichiers uniques avec timestamp
+- ⚠️ **Breaking change** : L'endpoint n'accepte plus de JSON avec `urlPath`, il faut maintenant envoyer le fichier directement
+
+### 2026-01-28 - Configuration Prisma
+- ✅ Downgrade de Prisma 7.x vers 6.x pour compatibilité
+- ✅ Ajout de `url = env("DATABASE_URL")` dans `schema.prisma`
+- ✅ Suppression des dépendances MariaDB (`@prisma/adapter-mariadb`, `mariadb`)
+- ✅ Configuration pour MySQL natif
+
+---
+
 ## Authentification
 
 ### `POST /api/users`
@@ -59,7 +100,10 @@ Ce document recense tous les endpoints disponibles dans le backend, leur rôle, 
 ## Famille
 
 ### `POST /api/family`
-**Rôle :** Créer une nouvelle famille. L'utilisateur courant devient ADMIN et membre ACTIF.
+**Rôle :** Créer une nouvelle famille. 
+- L'utilisateur courant devient **ADMIN** et membre **ACTIF**.
+- Un salon de discussion nommé **"Général"** est créé automatiquement.
+- Le créateur est automatiquement ajouté comme participant du salon Général.
 **Header :** `Authorization: Bearer <token>` (via cookie ou header selon l'implémentation auth)
 **Body :**
 ```json
@@ -166,6 +210,9 @@ Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `is
   "success": true
 }
 ```
+**Notes :**
+- Lorsqu'un membre reçoit au moins **3 votes APPROVE**, son statut passe automatiquement à **ACTIVE**.
+- Dès qu'un membre devient **ACTIVE**, il est automatiquement ajouté comme participant au salon de discussion **"Général"** de la famille.
 
 ---
 
@@ -243,19 +290,175 @@ Objet `Relationship` créé.
 
 ## Média
 
+⚠️ **Deux endpoints disponibles selon la taille du fichier** :
+- `/api/media/upload` - Pour les fichiers ≤ 10MB
+- `/api/media/upload-large` - Pour les fichiers ≤ 100MB (recommandé pour les vidéos)
+
 ### `POST /api/media/upload`
-**Rôle :** Enregistrer les métadonnées d'un média uploadé (l'upload fichier se fait généralement avant vers un storage type S3/Cloudinary, ici on sauve l'URL).
-**Body :**
+**Rôle :** Uploader un petit fichier (≤ 10MB) et enregistrer ses métadonnées.
+
+**⚠️ Limite :** 10MB maximum
+
+**⚠️ Important :** Cet endpoint accepte du **FormData**, pas du JSON.
+
+**Headers :**
+- `Authorization: Bearer <token>` (obligatoire)
+- ⚠️ **NE PAS** définir `Content-Type` - le navigateur le gère automatiquement
+
+**FormData Fields :**
+- `file` (obligatoire) : Le fichier à uploader (File object)
+- `familyId` (obligatoire) : ID de la famille (string ou number)
+- `mediaType` (optionnel) : Type de média - `"IMAGE"`, `"VIDEO"`, ou `"FILE"` (défaut: `"IMAGE"`)
+- `personId` (optionnel) : ID de la personne à lier au média (string ou number)
+
+**Exemple JavaScript :**
+```javascript
+const formData = new FormData();
+formData.append('file', fileInput.files[0]);
+formData.append('familyId', '1');
+formData.append('mediaType', 'IMAGE');
+// formData.append('personId', '5'); // Optionnel
+
+const response = await fetch('/api/media/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    // NE PAS définir Content-Type !
+  },
+  body: formData
+});
+```
+
+**Réponse (201 Created) :**
 ```json
 {
+  "id": 123,
   "familyId": 1,
-  "personId": 5, // Optionnel, pour lier à une personne spécifique
-  "urlPath": "https://bucket.url/image.jpg",
-  "mediaType": "IMAGE" // ou "VIDEO"
+  "uploaderId": 1,
+  "urlPath": "/uploads/1738065123456-photo.jpg",
+  "mediaType": "IMAGE",
+  "personId": null,
+  "eventId": null,
+  "messageId": null
 }
 ```
+
+**Erreurs possibles :**
+- **400** : `familyId` ou `file` manquant
+  ```json
+  { "error": "familyId and file required" }
+  ```
+- **401** : Token JWT manquant ou invalide
+  ```json
+  { "error": "Unauthorized" }
+  ```
+- **403** : L'utilisateur n'est pas membre actif de la famille
+  ```json
+  { "error": "Forbidden" }
+  ```
+- **500** : Erreur serveur (problème d'écriture du fichier, etc.)
+  ```json
+  { "error": "Failed to upload media" }
+  ```
+
+**Notes :**
+- Les fichiers sont sauvegardés dans `public/uploads/` avec un nom unique : `{timestamp}-{filename}`
+- L'URL retournée (`urlPath`) est accessible directement : `http://localhost:3001/uploads/...`
+- **Taille maximale : 10MB**
+- Pour les fichiers plus gros, utilisez `/api/media/upload-large`
+
+---
+
+### `POST /api/media/upload-large` ⭐
+**Rôle :** Uploader un gros fichier (≤ 100MB) et enregistrer ses métadonnées.
+
+**⚠️ Recommandé pour les vidéos !**
+
+**⚠️ Important :** Cet endpoint accepte du **FormData**, pas du JSON.
+
+**Headers :**
+- `Authorization: Bearer <token>` (obligatoire)
+- ⚠️ **NE PAS** définir `Content-Type` - le navigateur le gère automatiquement
+
+**FormData Fields :**
+- `file` (obligatoire) : Le fichier à uploader (File object)
+- `familyId` (obligatoire) : ID de la famille (string ou number)
+- `mediaType` (optionnel) : Type de média - `"IMAGE"`, `"VIDEO"`, ou `"FILE"` (défaut: `"IMAGE"`)
+- `personId` (optionnel) : ID de la personne à lier au média (string ou number)
+
+**Exemple JavaScript :**
+```javascript
+const formData = new FormData();
+formData.append('file', fileInput.files[0]);
+formData.append('familyId', '1');
+formData.append('mediaType', 'VIDEO'); // Pour une vidéo
+// formData.append('personId', '5'); // Optionnel
+
+const response = await fetch('/api/media/upload-large', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    // NE PAS définir Content-Type !
+  },
+  body: formData
+});
+```
+
+**Exemple avec choix automatique de l'endpoint :**
+```javascript
+async function uploadFile(file, familyId, token) {
+  // Choisir l'endpoint selon la taille
+  const endpoint = file.size > 10 * 1024 * 1024 
+    ? '/api/media/upload-large'  // > 10MB
+    : '/api/media/upload';        // ≤ 10MB
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('familyId', familyId.toString());
+  
+  // Déterminer le type automatiquement
+  let mediaType = 'FILE';
+  if (file.type.startsWith('image/')) mediaType = 'IMAGE';
+  if (file.type.startsWith('video/')) mediaType = 'VIDEO';
+  formData.append('mediaType', mediaType);
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+  });
+
+  return await response.json();
+}
+```
+
 **Réponse (201 Created) :**
-Objet `Media` créé.
+```json
+{
+  "id": 123,
+  "familyId": 1,
+  "uploaderId": 1,
+  "urlPath": "/uploads/1738065123456-video.mp4",
+  "mediaType": "VIDEO",
+  "personId": null,
+  "eventId": null,
+  "messageId": null
+}
+```
+
+**Erreurs possibles :**
+- **400** : `familyId` ou `file` manquant
+- **401** : Token JWT manquant ou invalide
+- **403** : L'utilisateur n'est pas membre actif de la famille
+- **413** : Fichier trop volumineux (> 100MB)
+- **500** : Erreur serveur
+
+**Notes :**
+- Les fichiers sont sauvegardés dans `public/uploads/` avec un nom unique : `{timestamp}-{filename}`
+- L'URL retournée (`urlPath`) est accessible directement : `http://localhost:3001/uploads/...`
+- **Taille maximale : 100MB**
+- Utilise formidable pour gérer les gros fichiers
+- Pas de timeout strict (peut prendre plusieurs minutes pour les gros fichiers)
 
 ### `GET /api/family/[familyId]/media`
 **Rôle :** Lister tous les médias d'une famille.

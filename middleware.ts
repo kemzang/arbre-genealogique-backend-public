@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
+  // Ignorer complètement le middleware pour l'endpoint upload-large
+  if (request.nextUrl.pathname === '/api/media/upload-large') {
+    return NextResponse.next();
+  }
+
   // Récupérer l'origine de la requête
   const origin = request.headers.get('origin') ?? ''
   
@@ -40,5 +45,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Appliquer le middleware à toutes les routes API
+  // L'exclusion de upload-large se fait dans la fonction middleware elle-même
   matcher: '/api/:path*',
 }

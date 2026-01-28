@@ -31,6 +31,57 @@ export async function POST(req: Request) {
     };
 
     const person = await prisma.person.create({ data });
+
+    // If a user is linked to this person, automatically make them an ACTIVE member of the family
+    // and add them to the General chat room
+    if (body.linkedUserId) {
+      const linkedUserId = parseInt(body.linkedUserId);
+      
+      const existingMember = await prisma.member.findFirst({
+        where: { userId: linkedUserId, familyId }
+      });
+
+      if (!existingMember) {
+        await prisma.member.create({
+          data: {
+            userId: linkedUserId,
+            familyId,
+            role: "VIEWER",
+            status: "ACTIVE"
+          }
+        });
+      } else if (existingMember.status !== "ACTIVE") {
+        await prisma.member.update({
+          where: { id: existingMember.id },
+          data: { status: "ACTIVE" }
+        });
+      }
+
+      // Add to ALL Public chat rooms
+      const publicRooms = await prisma.chatRoom.findMany({
+        where: { familyId, channelType: "PUBLIC" }
+      });
+
+      if (publicRooms.length > 0) {
+        await Promise.all(publicRooms.map(room => 
+          prisma.chatRoomParticipant.upsert({
+            where: {
+              chatRoomId_userId: {
+                chatRoomId: room.id,
+                userId: linkedUserId
+              }
+            },
+            update: {},
+            create: {
+              chatRoomId: room.id,
+              userId: linkedUserId,
+              role: "MEMBER"
+            }
+          })
+        ));
+      }
+    }
+
     return NextResponse.json(person, { status: 201 });
   } catch (err) {
     console.error(err);
