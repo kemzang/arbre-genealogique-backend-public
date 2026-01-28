@@ -245,13 +245,27 @@ Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `is
 }
 ```
 
-### Workflow : Constituer son arbre
-Pour créer des liens (père, mère, enfant), la procédure est séquentielle :
-1. **Créer les personnes** individuellement via `POST /api/person` et récupérer leurs IDs (ex: IdPère=10, IdMère=11, IdEnfant=12).
-2. **Créer les relations** via `POST /api/relationship` en utilisant ces IDs :
-   - Pour lier le Père à l'Enfant : `personAId: 10`, `personBId: 12`, `type: "PARENTAL"`
-   - Pour lier la Mère à l'Enfant : `personAId: 11`, `personBId: 12`, `type: "PARENTAL"`
-   - Pour lier les Parents (optionnel) : `personAId: 10`, `personBId: 11`, `type: "UNION"`
+### Workflow : Constituer son arbre (Convention Backend)
+Pour assurer un rendu correct, suivez toujours cette convention pour `personAId` et `personBId` :
+
+#### 1. Relation Parentale (`type: "PARENTAL"`)
+- **`personAId`** : TOUJOURS le **Parent** (père ou mère).
+- **`personBId`** : TOUJOURS l'**Enfant**.
+- *Note : Si l'enfant a deux parents, créez deux relations distinctes (Père->Enfant et Mère->Enfant).*
+
+#### 2. Relation d'Union (`type: "UNION"`)
+- **`personAId`** et **`personBId`** : Les deux conjoints (l'ordre n'a pas d'importance).
+
+#### 3. Relation Fratrie (`type: "SIBLING"`)
+- **`personAId`** et **`personBId`** : Les deux frères/sœurs (l'ordre n'a pas d'importance).
+  *Note : Bien que l'arbre puisse être déduit des liens PARENTAL, ce lien peut servir pour des cas spécifiques.*
+
+### Étapes Séquentielles pour le Front-end :
+1. **Créer les personnes** individuellement via `POST /api/person`.
+2. **Récupérer les IDs** (ex: IdPère=10, IdMère=11, IdEnfant=12).
+3. **Lier le Père à l'Enfant** : `personAId: 10`, `personBId: 12`, `type: "PARENTAL"`
+4. **Lier la Mère à l'Enfant** : `personAId: 11`, `personBId: 12`, `type: "PARENTAL"`
+5. **Lier les Conjoints** : `personAId: 10`, `personBId: 11`, `type: "UNION"`
 ```
 
 ### `POST /api/person`
@@ -285,6 +299,25 @@ Objet `Person` créé.
 ```
 **Réponse (201 Created) :**
 Objet `Relationship` créé.
+
+### `PATCH /api/relationship/[id]`
+**Rôle :** Modifier une relation existante (type ou caractère biologique).
+**Body :**
+```json
+{
+  "type": "SIBLING",
+  "isBiological": false
+}
+```
+**Réponse (200 OK) :**
+Objet `Relationship` mis à jour.
+
+### `DELETE /api/relationship/[id]`
+**Rôle :** Supprimer une relation.
+**Réponse (200 OK) :**
+`{ "success": true }`
+
+---
 
 ---
 
