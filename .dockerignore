@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+build
+.env
+.env.local
+.env.production
+.git
+.gitignore
+*.md
+LICENSE
+.github
+public/uploads/*
+!public/uploads/.gitignore

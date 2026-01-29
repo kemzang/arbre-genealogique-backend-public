@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Ignorer complètement le middleware pour l'endpoint upload-large
   if (request.nextUrl.pathname === '/api/media/upload-large') {
     return NextResponse.next();
