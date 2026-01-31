@@ -5,7 +5,7 @@ import { getUserFromRequest } from "@/lib/auth";
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const q = url.searchParams.get("name") || "";
+    const q = url.searchParams.get("name") || url.searchParams.get("q") || "";
     const user = await getUserFromRequest(req);
 
     const families = await prisma.family.findMany({

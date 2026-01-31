@@ -147,7 +147,8 @@ L'objet `Member` créé avec le statut `PENDING`.
 
 ### `GET /api/family/search?name=...`
 **Rôle :** Rechercher des familles par nom.
-**Query Params :** `name` (partie du nom de famille)
+**Query Params :** 
+- `name` ou `q` : Partie du nom de famille recherché.
 **Réponse (200 OK) :**
 Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `isMember` est ajouté.
 ```json
@@ -155,8 +156,8 @@ Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `is
   {
     "id": 1,
     "familyName": "Famille Dupont",
+    "logoUrl": "...",
     "createdAt": "...",
-    "updatedAt": "...",
     "isMember": true
   }
 ]
@@ -172,7 +173,12 @@ Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `is
     "familyId": 1,
     "userId": 5,
     "userEmail": "demandeur@example.com",
-    "joinedAt": "..."
+    "joinedAt": "...",
+    "applicationData": {
+       "gender": "M",
+       "relatedToPersonId": 5,
+       "relationshipType": "PARENTAL"
+    }
   }
 ]
 ```
@@ -300,6 +306,38 @@ Objet `Person` créé.
 **Réponse (201 Created) :**
 Objet `Relationship` créé.
 
+### `GET /api/relationship/[id]` ⭐ (Nouveau)
+**Rôle :** Obtenir les détails d'une relation. Pour une `UNION`, retourne aussi la liste des enfants communs identifiés.
+**Réponse (200 OK) :**
+```json
+{
+  "relationship": {
+    "id": 1,
+    "personAId": 1,
+    "personBId": 2,
+    "type": "UNION",
+    "personA": { "id": 1, "firstName": "Jean", ... },
+    "personB": { "id": 2, "firstName": "Marie", ... }
+  },
+  "children": [
+    { "id": 3, "firstName": "Théo", ... }
+  ]
+}
+```
+
+### `GET /api/person/[id]` ⭐ (Nouveau)
+**Rôle :** Obtenir les détails complets d'une personne : parents, enfants, conjoints et frères/sœurs.
+**Réponse (200 OK) :**
+```json
+{
+  "person": { "id": 1, "firstName": "Jean", "bio": "...", "media": [...] },
+  "parents": [...],
+  "children": [...],
+  "spouses": [...],
+  "siblings": [...]
+}
+```
+
 ### `PATCH /api/relationship/[id]`
 **Rôle :** Modifier une relation existante (type ou caractère biologique).
 **Body :**
@@ -342,7 +380,8 @@ Objet `Relationship` mis à jour.
 - `file` (obligatoire) : Le fichier à uploader (File object)
 - `familyId` (obligatoire) : ID de la famille (string ou number)
 - `mediaType` (optionnel) : Type de média - `"IMAGE"`, `"VIDEO"`, ou `"FILE"` (défaut: `"IMAGE"`)
-- `personId` (optionnel) : ID de la personne à lier au média (string ou number)
+- `personId` (optionnel) : ID de la personne à lier au média
+- `eventId` (optionnel) : ID de l'événement à lier au média
 
 **Exemple JavaScript :**
 ```javascript
@@ -417,7 +456,8 @@ const response = await fetch('/api/media/upload', {
 - `file` (obligatoire) : Le fichier à uploader (File object)
 - `familyId` (obligatoire) : ID de la famille (string ou number)
 - `mediaType` (optionnel) : Type de média - `"IMAGE"`, `"VIDEO"`, ou `"FILE"` (défaut: `"IMAGE"`)
-- `personId` (optionnel) : ID de la personne à lier au média (string ou number)
+- `personId` (optionnel) : ID de la personne à lier au média
+- `eventId` (optionnel) : ID de l'événement à lier au média
 
 **Exemple JavaScript :**
 ```javascript
@@ -511,6 +551,68 @@ async function uploadFile(file, familyId, token) {
   }
 ]
 ```
+
+---
+
+## 📅 Événements Familiaux (Nouveau) ⭐
+
+### `POST /api/event`
+**Rôle :** Créer un nouvel événement familial.
+**Body :**
+```json
+{
+  "familyId": 1,
+  "title": "Réunion de Noël 2024",
+  "eventDate": "2024-12-25", // Optionnel
+  "location": "Marseille, France" // Optionnel
+}
+```
+**Réponse (201 Created) :** Objet `FamilyEvent` créé.
+
+### `GET /api/family/[familyId]/events`
+**Rôle :** Lister tous les événements d'une famille.
+**Réponse (200 OK) :**
+```json
+[
+  {
+    "id": 1,
+    "familyId": 1,
+    "title": "Réunion de Noël 2024",
+    "eventDate": "2024-12-25T00:00:00.000Z",
+    "location": "Marseille",
+    "_count": { "media": 15 } // Nombre de photos/vidéos liées
+  }
+]
+```
+
+### `GET /api/event/[id]`
+**Rôle :** Obtenir les détails d'un événement précis et tous les médias (photos/vidéos) qui lui sont liés.
+**Réponse (200 OK) :**
+```json
+{
+  "id": 1,
+  "title": "Réunion de Noël 2024",
+  "media": [
+    { "id": 5, "urlPath": "/uploads/...", "mediaType": "IMAGE", "uploader": { "displayName": "Jean" } }
+  ]
+}
+```
+
+### `PATCH /api/event/[id]`
+**Rôle :** Modifier un événement (Titre, Date, Lieu).
+**Body :**
+```json
+{
+  "title": "Réunion de Noël (Modifié)",
+  "location": "Marseille (Chez Mamie)"
+}
+```
+
+### `DELETE /api/event/[id]`
+**Rôle :** Supprimer un événement.
+**Réponse (200 OK) :** `{ "success": true }`
+
+---
 
 ---
 

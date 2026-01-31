@@ -28,6 +28,7 @@ export async function GET(req: Request) {
       userId: p.userId,
       userEmail: p.user.email,
       joinedAt: p.joinedAt,
+      applicationData: p.applicationData,
     }));
     return NextResponse.json(out);
   } catch (err) {

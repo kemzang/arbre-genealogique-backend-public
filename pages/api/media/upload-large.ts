@@ -89,6 +89,7 @@ export default async function handler(
     const file = files.file?.[0];
     const familyIdStr = fields.familyId?.[0];
     const personIdStr = fields.personId?.[0];
+    const eventIdStr = fields.eventId?.[0];
     const mediaType = (fields.mediaType?.[0] as 'IMAGE' | 'VIDEO' | 'FILE') || 'IMAGE';
 
     if (!file || !familyIdStr) {
@@ -97,6 +98,7 @@ export default async function handler(
 
     const familyId = parseInt(familyIdStr);
     const personId = personIdStr ? parseInt(personIdStr) : undefined;
+    const eventId = eventIdStr ? parseInt(eventIdStr) : undefined;
 
     console.log('🔍 Validation:', {
       fileName: file.originalFilename,
@@ -126,6 +128,7 @@ export default async function handler(
     // Enregistrer dans la base de données
     const data: any = { familyId, uploaderId: user.id, urlPath, mediaType };
     if (personId) data.personId = personId;
+    if (eventId) data.eventId = eventId;
 
     const media = await prisma.media.create({ data });
 

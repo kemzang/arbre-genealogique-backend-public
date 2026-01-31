@@ -31,10 +31,12 @@ export async function POST(req: Request) {
     const file = formData.get("file") as File | null;
     const familyIdStr = formData.get("familyId") as string | null;
     const personIdStr = formData.get("personId") as string | null;
+    const eventIdStr = formData.get("eventId") as string | null;
     const mediaType = (formData.get("mediaType") as "IMAGE" | "VIDEO" | "FILE") || "IMAGE";
 
     const familyId = familyIdStr ? parseInt(familyIdStr) : null;
     const personId = personIdStr ? parseInt(personIdStr) : undefined;
+    const eventId = eventIdStr ? parseInt(eventIdStr) : undefined;
 
     console.log("🔍 Validation:", { 
       fileName: file?.name, 
@@ -86,6 +88,7 @@ export async function POST(req: Request) {
     // Enregistrer dans la base de données
     const data: any = { familyId, uploaderId: user.id, urlPath, mediaType };
     if (personId) data.personId = personId;
+    if (eventId) data.eventId = eventId;
 
     const media = await prisma.media.create({ data });
     return NextResponse.json(media, { status: 201 });
