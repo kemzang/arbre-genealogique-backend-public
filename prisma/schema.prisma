@@ -12,6 +12,7 @@ model User {
   email                  String                 @unique
   passwordHash           String                 @map("password_hash")
   displayName            String?                @map("display_name")
+  profilePictureUrl      String?                @map("profile_picture_url")
   createdAt              DateTime               @default(now()) @map("created_at")
   chatRoomParticipations ChatRoomParticipant[]
   createdChatRooms       ChatRoom[]             @relation("ChatRoomCreator")
@@ -26,14 +27,14 @@ model User {
 }
 
 model Family {
-  id         Int           @id @default(autoincrement())
-  familyName String        @map("family_name")
-  logoUrl    String?       @map("logo_url")
-  createdAt  DateTime      @default(now()) @map("created_at")
-  chatRooms  ChatRoom[]
-  media      Media[]
-  members    Member[]
-  persons    Person[]
+  id           Int                   @id @default(autoincrement())
+  familyName   String                @map("family_name")
+  logoUrl      String?               @map("logo_url")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  chatRooms    ChatRoom[]
+  media        Media[]
+  members      Member[]
+  persons      Person[]
   sharedEvents FamilyEventOnFamily[]
 
   @@map("families")
@@ -71,22 +72,23 @@ model MembershipValidation {
 }
 
 model Person {
-  id               Int            @id @default(autoincrement())
-  familyId         Int            @map("family_id")
-  firstName        String?        @map("first_name")
-  lastName         String?        @map("last_name")
-  birthDate        DateTime?      @map("birth_date")
-  deathDate        DateTime?      @map("death_date")
-  gender           Gender?
-  bio              String?
-  linkedUserId     Int?           @map("linked_user_id")
-  eventInvitations EventGuest[]
-  media            Media[]
-  family           Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  linkedUser       User?          @relation("UserLinkedPersons", fields: [linkedUserId], references: [id])
-  relationshipsA   Relationship[] @relation("relA")
-  relationshipsB   Relationship[] @relation("relB")
-  targetEvents     FamilyEvent[]  @relation("EventTargetBranch")
+  id                Int            @id @default(autoincrement())
+  familyId          Int            @map("family_id")
+  firstName         String?        @map("first_name")
+  lastName          String?        @map("last_name")
+  birthDate         DateTime?      @map("birth_date")
+  deathDate         DateTime?      @map("death_date")
+  gender            Gender?
+  bio               String?
+  profilePictureUrl String?        @map("profile_picture_url")
+  linkedUserId      Int?           @map("linked_user_id")
+  eventInvitations  EventGuest[]
+  media             Media[]
+  family            Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  linkedUser        User?          @relation("UserLinkedPersons", fields: [linkedUserId], references: [id])
+  relationshipsA    Relationship[] @relation("relA")
+  relationshipsB    Relationship[] @relation("relB")
+  targetEvents      FamilyEvent[]  @relation("EventTargetBranch")
 
   @@index([familyId], map: "persons_family_id_fkey")
   @@index([linkedUserId], map: "persons_linked_user_id_fkey")

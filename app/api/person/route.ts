@@ -27,6 +27,7 @@ export async function POST(req: Request) {
       deathDate: body.deathDate ? new Date(body.deathDate) : null,
       gender: body.gender ?? null,
       bio: body.bio ?? null,
+      profilePictureUrl: body.profilePictureUrl ?? null,
       linkedUserId: body.linkedUserId ?? null,
     };
 
@@ -55,6 +56,15 @@ export async function POST(req: Request) {
           where: { id: existingMember.id },
           data: { status: "ACTIVE" }
         });
+      }
+
+      // Update person photo if they don't have one but the linked user does
+      const userToCopy = await prisma.user.findUnique({ where: { id: linkedUserId } });
+      if (userToCopy?.profilePictureUrl && !person.profilePictureUrl) {
+          await prisma.person.update({
+              where: { id: person.id },
+              data: { profilePictureUrl: userToCopy.profilePictureUrl }
+          });
       }
 
       // Add to ALL Public chat rooms

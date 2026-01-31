@@ -50,9 +50,10 @@ JWT_SECRET="change_me_to_a_strong_secret"
 **Body :**
 ```json
 {
-  "email": "user@example.com",
-  "password": "securePassword123",
-  "name": "Jean Dupont" // Optionnel
+  "email": "jean@example.com",
+  "password": "monMotDePasse",
+  "name": "Jean Dupont",
+  "profilePictureUrl": "https://example.com/photo.jpg" // Requis. Photo obligatoire pour l'affichage dans l'arbre.
 }
 ```
 **Réponse (201 Created) :**
@@ -284,9 +285,10 @@ Pour assurer un rendu correct, suivez toujours cette convention pour `personAId`
   "lastName": "Curie",
   "birthDate": "1867-11-07",
   "deathDate": "1934-07-04",
-  "gender": "F", // "M", "F", "O"
-  "bio": "Physicienne et chimiste...",
-  "linkedUserId": 5
+  "gender": "M", // "M", "F", "O"
+  "bio": "Historien de la famille",
+  "profilePictureUrl": "https://example.com/photo.jpg", // Optionnel (hérité du User si lié)
+  "linkedUserId": 1 // Optionnel
 }
 ```
 **Réponse (201 Created) :**

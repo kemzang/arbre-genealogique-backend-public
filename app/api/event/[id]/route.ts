@@ -49,10 +49,10 @@ export async function GET(
       where: { id },
       include: {
         media: {
-          include: { uploader: { select: { displayName: true } } }
+          include: { uploader: { select: { displayName: true, profilePictureUrl: true } } }
         },
         guests: true,
-        creator: { select: { displayName: true } },
+        creator: { select: { displayName: true, profilePictureUrl: true } },
         sharedFamilies: true
       }
     });

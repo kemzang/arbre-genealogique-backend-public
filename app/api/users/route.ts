@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import type { User } from '@prisma/client';
-
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const email: string = body.email;
-    const password: string = body.password;
-    const name: string | undefined = body.name;
+    const { email, password, name, profilePictureUrl } = body;
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email et mot de passe requis' }, { status: 400 });
+    // Validation: profilePictureUrl is now REQUIRED
+    if (!email || !password || !profilePictureUrl) {
+      return NextResponse.json({ 
+        error: 'Email, mot de passe et photo de profil sont requis' 
+      }, { status: 400 });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -23,13 +22,14 @@ export async function POST(req: Request) {
         email,
         passwordHash,
         displayName: name,
+        profilePictureUrl, // Save the photo URL
       },
     });
 
     // don't return the password hash
     const { passwordHash: _ph, ...safeUser } = newUser as User;
 
-    return NextResponse.json(safeUser as Omit<User, 'passwordHash'>, { status: 201 });
+    return NextResponse.json(safeUser, { status: 201 });
   } catch (error) {
     console.error(error);
     const message = error instanceof Error ? error.message : String(error);

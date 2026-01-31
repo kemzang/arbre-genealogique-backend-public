@@ -27,6 +27,8 @@ export async function GET(req: Request) {
       familyId: p.familyId,
       userId: p.userId,
       userEmail: p.user.email,
+      userDisplayName: p.user.displayName,
+      profilePictureUrl: p.user.profilePictureUrl,
       joinedAt: p.joinedAt,
       applicationData: p.applicationData,
     }));
