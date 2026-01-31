@@ -10,35 +10,67 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { familyId, title, eventDate, location } = body;
+    const { 
+      familyIds = [], // Array of family IDs where this event is shared
+      title, 
+      eventDate, 
+      location, 
+      visibility = "PUBLIC", 
+      guestPersonIds = [],
+      targetPersonId // For BRANCH visibility
+    } = body;
 
-    if (!familyId || !title) {
+    // Use the first familyId as the primary one for validation if familyIds is provided
+    const primaryFamilyId = familyIds.length > 0 ? familyIds[0] : null;
+
+    if (!primaryFamilyId || !title) {
       return NextResponse.json(
-        { error: "familyId and title are required" },
+        { error: "At least one familyId and title are required" },
         { status: 400 }
       );
     }
 
-    // Check if user is an ACTIVE member of the family
-    const membership = await prisma.member.findFirst({
+    // Check if user is an ACTIVE member of ALL target families
+    const memberships = await prisma.member.findMany({
       where: {
         userId: user.id,
-        familyId: parseInt(familyId),
+        familyId: { in: familyIds.map((id: any) => parseInt(id)) },
         status: "ACTIVE",
       },
     });
 
-    if (!membership) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (memberships.length < familyIds.length) {
+      return NextResponse.json({ error: "Forbidden: You are not an active member of all specified families" }, { status: 403 });
     }
 
+    // Create the event
     const event = await prisma.familyEvent.create({
       data: {
-        familyId: parseInt(familyId),
+        creatorId: user.id,
         title,
         eventDate: eventDate ? new Date(eventDate) : null,
         location,
+        visibility,
+        targetPersonId: visibility === "BRANCH" ? parseInt(targetPersonId) : null,
+        // Shared with these families
+        sharedFamilies: {
+            create: familyIds.map((fid: any) => ({
+                familyId: parseInt(fid)
+            }))
+        },
+        // If restricted, add guests
+        guests: visibility === "RESTRICTED" && guestPersonIds.length > 0
+          ? {
+              create: guestPersonIds.map((pid: any) => ({
+                personId: parseInt(pid),
+              })),
+            }
+          : undefined,
       },
+      include: {
+        guests: true,
+        sharedFamilies: true
+      }
     });
 
     return NextResponse.json(event, { status: 201 });

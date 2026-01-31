@@ -561,26 +561,28 @@ async function uploadFile(file, familyId, token) {
 **Body :**
 ```json
 {
-  "familyId": 1,
+  "familyIds": [1, 2], // Liste des IDs des familles qui pourront voir l'événement.
   "title": "Réunion de Noël 2024",
-  "eventDate": "2024-12-25", // Optionnel
-  "location": "Marseille, France" // Optionnel
+  "eventDate": "2024-12-25",
+  "location": "Marseille, France",
+  "visibility": "BRANCH", // "PUBLIC", "PRIVATE", "RESTRICTED", "BRANCH"
+  "targetPersonId": 10, // Requis si visibility est BRANCH. Seule la lignée de cette personne verra l'événement.
+  "guestPersonIds": [10, 15] // Requis si visibility est RESTRICTED.
 }
 ```
 **Réponse (201 Created) :** Objet `FamilyEvent` créé.
 
 ### `GET /api/family/[familyId]/events`
-**Rôle :** Lister tous les événements d'une famille.
+**Rôle :** Lister tous les événements accessibles dans cette famille (Filtre automatiquement selon les droits de visibilité et les branches).
 **Réponse (200 OK) :**
 ```json
 [
   {
     "id": 1,
-    "familyId": 1,
-    "title": "Réunion de Noël 2024",
-    "eventDate": "2024-12-25T00:00:00.000Z",
-    "location": "Marseille",
-    "_count": { "media": 15 } // Nombre de photos/vidéos liées
+    "title": "Secrets de famille (Côté Maternel)",
+    "visibility": "BRANCH",
+    "targetPersonId": 5,
+    "creator": { "displayName": "Jean" }
   }
 ]
 ```
@@ -599,12 +601,14 @@ async function uploadFile(file, familyId, token) {
 ```
 
 ### `PATCH /api/event/[id]`
-**Rôle :** Modifier un événement (Titre, Date, Lieu).
+**Rôle :** Modifier un événement (Titre, Date, Lieu, Visibilité).
 **Body :**
 ```json
 {
   "title": "Réunion de Noël (Modifié)",
-  "location": "Marseille (Chez Mamie)"
+  "location": "Marseille (Chez Mamie)",
+  "visibility": "RESTRICTED",
+  "guestPersonIds": [10, 11]
 }
 ```
 
