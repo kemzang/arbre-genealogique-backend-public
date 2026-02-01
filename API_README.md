@@ -7,7 +7,11 @@ Ce document recense tous les endpoints disponibles dans le backend, leur rôle, 
 ### Base de données
 - **Type** : MySQL
 - **ORM** : Prisma 6.x
-- **Connexion** : Configurée via la variable d'environnement `DATABASE_URL`
+- **Workflow** : ⚠️ Utilisez la commande suivante pour toute modification du schéma :
+  ```bash
+  npx prisma migrate dev --name <description>
+  ```
+  *(Le dossier `prisma/migrations` contient l'historique des changements).*
 
 ### Variables d'environnement (`.env`)
 ```env
@@ -28,6 +32,13 @@ JWT_SECRET="change_me_to_a_strong_secret"
 ---
 
 ## 📝 Changelog récent
+
+### 2026-02-01 - 🚀 Système Pro & Fusion de Familles
+- ✅ Mise en place des migrations Prisma (`prisma migrate dev`)
+- ✅ **Liaisons Inter-Familles** : Support de la création de relations entre personnes de deux familles différentes.
+- ✅ **Nouveaux modèles** : `FamilyMergeRequest` et `FamilyConnection`.
+- ✅ **Nouveaux endpoints** : `/api/family/fusion-request` et `/api/family/validate-cross-relationship`.
+- ✅ **Arbre agrégé** : L'API `/api/tree` retourne maintenant les données des familles connectées.
 
 ### 2026-01-28 - Upload de fichiers
 - ✅ Modification de `/api/media/upload` pour accepter les fichiers via FormData
@@ -184,6 +195,31 @@ Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `is
 ]
 ```
 
+### 🚀 `POST /api/family/fusion-request` ⭐ (Nouveau)
+**Rôle :** Initier une demande de lien (fusion) entre deux familles.
+- **Droits** : Réservé aux **ADMIN** de la famille source.
+**Body :**
+```json
+{
+  "sourceFamilyId": 1,
+  "targetFamilyId": 2
+}
+```
+**Réponse (201 Created) :** Objet `FamilyMergeRequest` avec statut `PENDING`.
+
+### 🚀 `POST /api/family/validate-cross-relationship` ⭐ (Nouveau)
+**Rôle :** Accepter ou rejeter une demande de fusion.
+- **Droits** : Réservé aux **ADMIN** de la famille cible.
+- **Effet** : Si `APPROVE`, crée une `FamilyConnection` permanente entre les deux familles.
+**Body :**
+```json
+{
+  "requestId": 123,
+  "action": "APPROVE" // ou "REJECT"
+}
+```
+**Réponse (200 OK) :** Détails de la requête mise à jour et de la connexion créée.
+
 ---
 
 ## Membres
@@ -226,29 +262,16 @@ Liste des familles correspondantes. Si l'utilisateur est connecté, un champ `is
 ## Arbre Généalogique & Personnes
 
 ### `GET /api/tree?familyId=...`
-**Rôle :** Récupérer toutes les personnes et relations d'une famille pour construire l'arbre.
+**Rôle :** Récupérer toutes les personnes et relations pour construire l'arbre.
+- **Nouveau** : Retourne automatiquement les données de la famille demandée **ET** de toutes les familles qui lui sont connectées (via `FamilyConnection`).
 **Query Params :** `familyId` (Optionnel si l'utilisateur n'a qu'une famille active, sinon requis)
 **Réponse (200 OK) :**
 ```json
 {
-  "persons": [
-    {
-      "id": 1,
-      "firstName": "Jean",
-      "lastName": "Dupont",
-      "birthDate": "1980-01-01T00:00:00.000Z",
-      ...
-    }
-  ],
-  "relationships": [
-    {
-      "id": 1,
-      "personAId": 1,
-      "personBId": 2,
-      "type": "PARENTAL", // "PARENTAL", "UNION", "SIBLING"
-      "isBiological": true
-    }
-  ]
+  "persons": [...], // Tout le monde dans le réseau de familles liées
+  "relationships": [...],
+  "primaryFamilyId": 1,
+  "connectedFamiliesCount": 2
 }
 ```
 
@@ -296,6 +319,7 @@ Objet `Person` créé.
 
 ### `POST /api/relationship`
 **Rôle :** Créer un lien de parenté entre deux personnes existantes.
+- **Nouveau** : Supporte les liens **Inter-Familles**. Si `personA` et `personB` sont de familles différentes, une `FamilyConnection` approuvée doit exister entre ces familles.
 **Body :**
 ```json
 {
@@ -305,8 +329,7 @@ Objet `Person` créé.
   "isBiological": true
 }
 ```
-**Réponse (201 Created) :**
-Objet `Relationship` créé.
+**Réponse (201 Created) :** Objet `Relationship` créé.
 
 ### `GET /api/relationship/[id]` ⭐ (Nouveau)
 **Rôle :** Obtenir les détails d'une relation. Pour une `UNION`, retourne aussi la liste des enfants communs identifiés.

@@ -22,6 +22,7 @@ model User {
   validationsGiven       MembershipValidation[] @relation("ValidationsByUser")
   messages               Message[]
   linkedPersons          Person[]               @relation("UserLinkedPersons")
+  mergeRequests          FamilyMergeRequest[]
 
   @@map("users")
 }
@@ -36,6 +37,12 @@ model Family {
   members      Member[]
   persons      Person[]
   sharedEvents FamilyEventOnFamily[]
+  
+  // Relations for family connections and mergers
+  outgoingMergeRequests FamilyMergeRequest[] @relation("SourceFamily")
+  incomingMergeRequests FamilyMergeRequest[] @relation("TargetFamily")
+  connectionsA          FamilyConnection[]   @relation("FamilyA")
+  connectionsB          FamilyConnection[]   @relation("FamilyB")
 
   @@map("families")
 }
@@ -107,6 +114,34 @@ model Relationship {
   @@index([personAId], map: "relationships_person_a_id_fkey")
   @@index([personBId], map: "relationships_person_b_id_fkey")
   @@map("relationships")
+}
+
+model FamilyMergeRequest {
+  id               Int           @id @default(autoincrement())
+  sourceFamilyId   Int           @map("source_family_id")
+  targetFamilyId   Int           @map("target_family_id")
+  requesterId      Int           @map("requester_id")
+  status           RequestStatus @default(PENDING)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  
+  sourceFamily     Family        @relation("SourceFamily", fields: [sourceFamilyId], references: [id], onDelete: Cascade)
+  targetFamily     Family        @relation("TargetFamily", fields: [targetFamilyId], references: [id], onDelete: Cascade)
+  requester        User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@map("family_merge_requests")
+}
+
+model FamilyConnection {
+  id        Int      @id @default(autoincrement())
+  familyAId Int      @map("family_a_id")
+  familyBId Int      @map("family_b_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  familyA   Family   @relation("FamilyA", fields: [familyAId], references: [id], onDelete: Cascade)
+  familyB   Family   @relation("FamilyB", fields: [familyBId], references: [id], onDelete: Cascade)
+
+  @@unique([familyAId, familyBId])
+  @@map("family_connections")
 }
 
 model ChatRoom {
@@ -232,6 +267,12 @@ enum Role {
 enum MemberStatus {
   PENDING
   ACTIVE
+  REJECTED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
   REJECTED
 }
 

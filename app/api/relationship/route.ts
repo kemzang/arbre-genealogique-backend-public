@@ -25,17 +25,37 @@ export async function POST(req: Request) {
     if (!personA || !personB)
       return NextResponse.json({ error: "Person not found" }, { status: 404 });
 
-    // check same family and user is active in that family
-    if (personA.familyId !== personB.familyId)
-      return NextResponse.json(
-        { error: "Persons must belong to same family" },
-        { status: 400 },
-      );
+    // logic for cross-family relationships
+    if (personA.familyId !== personB.familyId) {
+        // Check if families are connected
+        const connection = await prisma.familyConnection.findFirst({
+            where: {
+                OR: [
+                    { familyAId: personA.familyId, familyBId: personB.familyId },
+                    { familyAId: personB.familyId, familyBId: personA.familyId }
+                ]
+            }
+        });
+
+        if (!connection) {
+            return NextResponse.json(
+                { error: "Families are not connected. Send a fusion request first." },
+                { status: 400 },
+            );
+        }
+    }
+
+    // User must be active in at least one of the involved families
     const active = await prisma.member.findFirst({
-      where: { userId: user.id, familyId: personA.familyId, status: "ACTIVE" },
+      where: { 
+          userId: user.id, 
+          familyId: { in: [personA.familyId, personB.familyId] }, 
+          status: "ACTIVE" 
+      },
     });
+    
     if (!active)
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden: You are not an active member of involved families" }, { status: 403 });
 
     const rel = await prisma.relationship.create({
       data: { personAId, personBId, type, isBiological },
