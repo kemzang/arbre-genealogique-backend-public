@@ -29,11 +29,11 @@ export async function POST(req: Request) {
         familyId,
         role: "VIEWER",
         status: "PENDING",
-        applicationData: {
+        applicationData: JSON.stringify({
           gender: body.gender,
           relatedToPersonId: body.relatedToPersonId, // ID of person they claim to be related to
           relationshipType: body.relationshipType, // PARENTAL, UNION, SIBLING
-        },
+        }),
       },
     });
 

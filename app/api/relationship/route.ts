@@ -9,7 +9,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { personAId, personBId, type, isBiological = true } = body;
+    const { 
+      personAId, 
+      personBId, 
+      type, 
+      isBiological = true,
+      startDate,
+      notes
+    } = body;
+    
     if (!personAId || !personBId || !type)
       return NextResponse.json(
         { error: "personAId, personBId and type required" },
@@ -58,7 +66,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden: You are not an active member of involved families" }, { status: 403 });
 
     const rel = await prisma.relationship.create({
-      data: { personAId, personBId, type, isBiological },
+      data: { 
+        personAId, 
+        personBId, 
+        type, 
+        isBiological,
+        status: "ACTIVE",
+        startDate: startDate ? new Date(startDate) : new Date(),
+        notes
+      },
     });
     return NextResponse.json(rel, { status: 201 });
   } catch (err) {

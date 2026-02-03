@@ -15,7 +15,12 @@ export async function POST(req: Request) {
 
     const mergeRequest = await prisma.familyMergeRequest.findUnique({
       where: { id: requestId },
-      include: { sourceFamily: true, targetFamily: true }
+      include: { 
+        sourceFamily: true, 
+        targetFamily: true,
+        sourcePerson: true,
+        targetPerson: true
+      }
     });
 
     if (!mergeRequest || mergeRequest.status !== "PENDING") {
@@ -40,8 +45,11 @@ export async function POST(req: Request) {
     }
 
     if (action === "APPROVE") {
-      // Use a transaction to update request and create connection
-      const [updatedRequest, connection] = await prisma.$transaction([
+      // Use a transaction to:
+      // 1. Update request status
+      // 2. Create family connection
+      // 3. Create the actual relationship between the two persons
+      const [updatedRequest, connection, relationship] = await prisma.$transaction([
         prisma.familyMergeRequest.update({
           where: { id: requestId },
           data: { status: "APPROVED" }
@@ -58,10 +66,26 @@ export async function POST(req: Request) {
             familyAId: Math.min(mergeRequest.sourceFamilyId, mergeRequest.targetFamilyId),
             familyBId: Math.max(mergeRequest.sourceFamilyId, mergeRequest.targetFamilyId)
           }
+        }),
+        // Create the actual relationship between the two persons
+        prisma.relationship.create({
+          data: {
+            personAId: mergeRequest.sourcePersonId,
+            personBId: mergeRequest.targetPersonId,
+            type: mergeRequest.relationshipType,
+            status: "ACTIVE",
+            startDate: new Date(),
+            isBiological: true // Default, can be modified later
+          }
         })
       ]);
 
-      return NextResponse.json({ updatedRequest, connection });
+      return NextResponse.json({ 
+        updatedRequest, 
+        connection, 
+        relationship,
+        message: `Families connected through ${mergeRequest.relationshipType} relationship between ${mergeRequest.sourcePerson.firstName} and ${mergeRequest.targetPerson.firstName}`
+      });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

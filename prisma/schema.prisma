@@ -96,6 +96,10 @@ model Person {
   relationshipsA    Relationship[] @relation("relA")
   relationshipsB    Relationship[] @relation("relB")
   targetEvents      FamilyEvent[]  @relation("EventTargetBranch")
+  
+  // Relations pour les demandes de fusion
+  sourceRequests    FamilyMergeRequest[] @relation("SourcePersonRequests")
+  targetRequests    FamilyMergeRequest[] @relation("TargetPersonRequests")
 
   @@index([familyId], map: "persons_family_id_fkey")
   @@index([linkedUserId], map: "persons_linked_user_id_fkey")
@@ -108,6 +112,14 @@ model Relationship {
   personBId    Int              @map("person_b_id")
   type         RelationshipType @map("type")
   isBiological Boolean          @default(true) @map("is_biological")
+  
+  // Nouveaux champs pour l'historique et le statut
+  status       RelationshipStatus @default(ACTIVE) @map("status")
+  startDate    DateTime?        @map("start_date")    // Date de début (mariage, naissance, etc.)
+  endDate      DateTime?        @map("end_date")      // Date de fin (divorce, décès, etc.)
+  endReason    String?          @map("end_reason")    // Raison de la fin (divorce, décès, etc.)
+  notes        String?          @map("notes")         // Notes additionnelles
+  
   personA      Person           @relation("relA", fields: [personAId], references: [id], onDelete: Cascade)
   personB      Person           @relation("relB", fields: [personBId], references: [id], onDelete: Cascade)
 
@@ -124,9 +136,17 @@ model FamilyMergeRequest {
   status           RequestStatus @default(PENDING)
   createdAt        DateTime      @default(now()) @map("created_at")
   
+  // Nouvelles colonnes pour spécifier la relation concrète
+  sourcePersonId   Int           @map("source_person_id")  // Personne de la famille source
+  targetPersonId   Int           @map("target_person_id")  // Personne de la famille cible
+  relationshipType RelationshipType @map("relationship_type") // Type de relation (UNION, PARENTAL, etc.)
+  justification    String?       @map("justification")     // Explication de la demande
+  
   sourceFamily     Family        @relation("SourceFamily", fields: [sourceFamilyId], references: [id], onDelete: Cascade)
   targetFamily     Family        @relation("TargetFamily", fields: [targetFamilyId], references: [id], onDelete: Cascade)
   requester        User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  sourcePerson     Person        @relation("SourcePersonRequests", fields: [sourcePersonId], references: [id], onDelete: Cascade)
+  targetPerson     Person        @relation("TargetPersonRequests", fields: [targetPersonId], references: [id], onDelete: Cascade)
 
   @@map("family_merge_requests")
 }
@@ -314,4 +334,10 @@ enum ChannelType {
 enum ChatRole {
   ADMIN
   MEMBER
+}
+
+enum RelationshipStatus {
+  ACTIVE      // Relation active (marié, vivant, etc.)
+  ENDED       // Relation terminée (divorcé, séparé, etc.)
+  DECEASED    // Une des personnes est décédée
 }

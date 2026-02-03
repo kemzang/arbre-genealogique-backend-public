@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE `relationships` ADD COLUMN `end_date` DATETIME(3) NULL,
+    ADD COLUMN `end_reason` VARCHAR(191) NULL,
+    ADD COLUMN `notes` VARCHAR(191) NULL,
+    ADD COLUMN `start_date` DATETIME(3) NULL,
+    ADD COLUMN `status` ENUM('ACTIVE', 'ENDED', 'DECEASED') NOT NULL DEFAULT 'ACTIVE';

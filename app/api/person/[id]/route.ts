@@ -11,14 +11,27 @@ export async function GET(
     const id = parseInt(idStr);
     const user = await getUserFromRequest(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
     const person = await prisma.person.findUnique({
       where: { id },
       include: {
         relationshipsA: {
-            include: { personB: true }
+            include: { 
+              personB: true 
+            },
+            orderBy: [
+              { status: 'asc' }, // ACTIVE first
+              { startDate: 'desc' } // Most recent first
+            ]
         },
         relationshipsB: {
-            include: { personA: true }
+            include: { 
+              personA: true 
+            },
+            orderBy: [
+              { status: 'asc' }, // ACTIVE first
+              { startDate: 'desc' } // Most recent first
+            ]
         },
         media: {
           orderBy: { id: 'desc' },
@@ -35,32 +48,121 @@ export async function GET(
     });
     if (!member) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    // Format results to be easier for frontend
+    // Format results with historical information
     // PARENTAL: A=Parent, B=Child
     const parents = [
-        ...person.relationshipsB.filter(r => r.type === "PARENTAL").map(r => r.personA),
+        ...person.relationshipsB.filter(r => r.type === "PARENTAL").map(r => ({
+          ...r.personA,
+          relationshipInfo: {
+            id: r.id,
+            status: r.status,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            endReason: r.endReason,
+            isBiological: r.isBiological,
+            notes: r.notes
+          }
+        })),
     ];
     
     const children = [
-        ...person.relationshipsA.filter(r => r.type === "PARENTAL").map(r => r.personB),
+        ...person.relationshipsA.filter(r => r.type === "PARENTAL").map(r => ({
+          ...r.personB,
+          relationshipInfo: {
+            id: r.id,
+            status: r.status,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            endReason: r.endReason,
+            isBiological: r.isBiological,
+            notes: r.notes
+          }
+        })),
     ];
 
-    const spouses = [
-        ...person.relationshipsA.filter(r => r.type === "UNION").map(r => r.personB),
-        ...person.relationshipsB.filter(r => r.type === "UNION").map(r => r.personA),
+    // Spouses with full history (current and ex-spouses)
+    const allSpouses = [
+        ...person.relationshipsA.filter(r => r.type === "UNION").map(r => ({
+          ...r.personB,
+          relationshipInfo: {
+            id: r.id,
+            status: r.status,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            endReason: r.endReason,
+            isBiological: r.isBiological,
+            notes: r.notes
+          }
+        })),
+        ...person.relationshipsB.filter(r => r.type === "UNION").map(r => ({
+          ...r.personA,
+          relationshipInfo: {
+            id: r.id,
+            status: r.status,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            endReason: r.endReason,
+            isBiological: r.isBiological,
+            notes: r.notes
+          }
+        })),
     ];
+
+    // Separate current and former spouses
+    const currentSpouses = allSpouses.filter(s => s.relationshipInfo.status === "ACTIVE");
+    const formerSpouses = allSpouses.filter(s => s.relationshipInfo.status !== "ACTIVE");
 
     const siblings = [
-        ...person.relationshipsA.filter(r => r.type === "SIBLING").map(r => r.personB),
-        ...person.relationshipsB.filter(r => r.type === "SIBLING").map(r => r.personA),
+        ...person.relationshipsA.filter(r => r.type === "SIBLING").map(r => ({
+          ...r.personB,
+          relationshipInfo: {
+            id: r.id,
+            status: r.status,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            endReason: r.endReason,
+            isBiological: r.isBiological,
+            notes: r.notes
+          }
+        })),
+        ...person.relationshipsB.filter(r => r.type === "SIBLING").map(r => ({
+          ...r.personA,
+          relationshipInfo: {
+            id: r.id,
+            status: r.status,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            endReason: r.endReason,
+            isBiological: r.isBiological,
+            notes: r.notes
+          }
+        })),
     ];
+
+    // Relationship history summary
+    const relationshipHistory = {
+      totalMarriages: allSpouses.length,
+      currentMarriages: currentSpouses.length,
+      divorces: formerSpouses.filter(s => 
+        s.relationshipInfo.endReason?.toLowerCase().includes('divorce') ||
+        s.relationshipInfo.endReason?.toLowerCase().includes('divorcé')
+      ).length,
+      widowed: formerSpouses.filter(s => 
+        s.relationshipInfo.status === "DECEASED" ||
+        s.relationshipInfo.endReason?.toLowerCase().includes('décès') ||
+        s.relationshipInfo.endReason?.toLowerCase().includes('death')
+      ).length
+    };
 
     return NextResponse.json({
       person,
       parents,
       children,
-      spouses,
-      siblings
+      currentSpouses,
+      formerSpouses,
+      allSpouses, // Complete history
+      siblings,
+      relationshipHistory
     });
   } catch (err) {
     console.error(err);
