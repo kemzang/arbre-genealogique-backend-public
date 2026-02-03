@@ -20,3 +20,17 @@ export async function getUserFromRequest(req: Request) {
     return null;
   }
 }
+
+export async function getSuperAdminFromRequest(req: Request) {
+  const user = await getUserFromRequest(req);
+  if (!user || !user.isSuperAdmin) return null;
+  return user;
+}
+
+export async function requireSuperAdmin(req: Request) {
+  const superAdmin = await getSuperAdminFromRequest(req);
+  if (!superAdmin) {
+    throw new Error("Super admin access required");
+  }
+  return superAdmin;
+}

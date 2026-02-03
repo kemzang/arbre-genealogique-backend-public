@@ -13,6 +13,7 @@ model User {
   passwordHash           String                 @map("password_hash")
   displayName            String?                @map("display_name")
   profilePictureUrl      String?                @map("profile_picture_url")
+  isSuperAdmin           Boolean                @default(false) @map("is_super_admin")
   createdAt              DateTime               @default(now()) @map("created_at")
   chatRoomParticipations ChatRoomParticipant[]
   createdChatRooms       ChatRoom[]             @relation("ChatRoomCreator")

@@ -33,6 +33,15 @@ JWT_SECRET="change_me_to_a_strong_secret"
 
 ## 📝 Changelog récent
 
+### 2026-02-03 - � Système Super-Admin Complet
+- ✅ **Super-Admin de plateforme** : Nouveau rôle `isSuperAdmin` au niveau utilisateur
+- ✅ **Gestion des utilisateurs** : Endpoints pour lister, voir détails, promouvoir, supprimer
+- ✅ **Gestion des familles** : Endpoints pour lister, voir détails, supprimer les familles
+- ✅ **Statistiques globales** : Dashboard avec métriques complètes de la plateforme
+- ✅ **Monitoring d'activité** : Suivi en temps réel des actions utilisateurs
+- ✅ **Bootstrap sécurisé** : Endpoint pour créer le premier super-admin
+- ✅ **Authentification renforcée** : Middlewares de vérification super-admin
+
 ### 2026-02-03 - 🚀 Système de Relations Avancé & Historique Complet
 - ✅ **Fusion de familles réaliste** : Basée sur des relations concrètes entre personnes spécifiques
 - ✅ **Gestion des divorces/séparations** : Endpoint `/api/relationship/[id]/end` pour terminer des relations
@@ -1476,3 +1485,58 @@ Objet `Message` créé, incluant les attachements (tableau `attachments`).
 ```
 
 **🎯 Pour l'équipe Frontend :** Ce document contient toutes les spécifications nécessaires pour intégrer les nouvelles fonctionnalités de fusion de familles et de gestion avancée des relations. Chaque endpoint inclut les formats de requête/réponse exacts et les codes d'erreur à gérer.
+
+---
+
+## 🔐 Super-Admin - Gestion de Plateforme
+
+### `POST /api/admin/bootstrap` ⭐ (Nouveau)
+**Rôle :** Créer le premier super-administrateur de la plateforme (une seule fois).
+**Headers :** `Authorization: Bearer <token>`
+**Body :**
+```json
+{
+  "confirmEmail": "admin@example.com" // Email de l'utilisateur actuel pour confirmation
+}
+```
+**Réponse (200 OK) :**
+```json
+{
+  "success": true,
+  "message": "You have been promoted to the first super admin",
+  "user": {
+    "id": 1,
+    "email": "admin@example.com",
+    "displayName": "Admin User",
+    "isSuperAdmin": true
+  }
+}
+```
+
+### `GET /api/admin/users` ⭐ (Nouveau)
+**Rôle :** Lister tous les utilisateurs de la plateforme.
+**Droits :** Super-Admin uniquement
+**Query Params :** `page`, `limit`, `search`
+
+### `PATCH /api/admin/users/[id]` ⭐ (Nouveau)
+**Rôle :** Promouvoir/rétrograder ou modifier un utilisateur.
+**Actions :** `promote`, `demote`, ou modification directe
+
+### `DELETE /api/admin/users/[id]` ⭐ (Nouveau)
+**Rôle :** Supprimer un utilisateur (avec vérifications de sécurité).
+
+### `GET /api/admin/families` ⭐ (Nouveau)
+**Rôle :** Lister toutes les familles avec statistiques.
+
+### `DELETE /api/admin/families/[id]` ⭐ (Nouveau)
+**Rôle :** Supprimer une famille (avec vérifications de connexions).
+
+### `GET /api/admin/stats` ⭐ (Nouveau)
+**Rôle :** Statistiques globales de la plateforme avec croissance et distribution.
+
+### `GET /api/admin/activity` ⭐ (Nouveau)
+**Rôle :** Activité récente et monitoring en temps réel.
+
+---
+
+**🎯 Super-Admin System Ready !** Le système de super-administrateur est maintenant complet avec tous les endpoints nécessaires pour gérer la plateforme.
