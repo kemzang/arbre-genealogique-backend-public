@@ -1490,53 +1490,60 @@ Objet `Message` créé, incluant les attachements (tableau `attachments`).
 
 ## 🔐 Super-Admin - Gestion de Plateforme
 
-### `POST /api/admin/bootstrap` ⭐ (Nouveau)
-**Rôle :** Créer le premier super-administrateur de la plateforme (une seule fois).
-**Headers :** `Authorization: Bearer <token>`
-**Body :**
-```json
-{
-  "confirmEmail": "admin@example.com" // Email de l'utilisateur actuel pour confirmation
-}
-```
-**Réponse (200 OK) :**
-```json
-{
-  "success": true,
-  "message": "You have been promoted to the first super admin",
-  "user": {
-    "id": 1,
-    "email": "admin@example.com",
-    "displayName": "Admin User",
-    "isSuperAdmin": true
-  }
-}
-```
+**Note importante :** Désormais, un Super-Admin est créé automatiquement au premier démarrage de l'application via le script de seed.
+- **Email par défaut :** `admin@family.com`
+- **Mot de passe par défaut :** `admin123`
+- **Configuration :** Modifiable via `ADMIN_EMAIL` et `ADMIN_PASSWORD` dans le fichier `.env`.
 
-### `GET /api/admin/users` ⭐ (Nouveau)
-**Rôle :** Lister tous les utilisateurs de la plateforme.
-**Droits :** Super-Admin uniquement
-**Query Params :** `page`, `limit`, `search`
+### 📊 Statistiques & Dashboard
 
-### `PATCH /api/admin/users/[id]` ⭐ (Nouveau)
-**Rôle :** Promouvoir/rétrograder ou modifier un utilisateur.
-**Actions :** `promote`, `demote`, ou modification directe
+#### `GET /api/admin/stats`
+**Rôle :** Récupérer les statistiques globales de la plateforme (Dashboard).
+**Query Params :**
+- `period` (optional) : Nombre de jours pour les stats de croissance (défaut : 30).
+**Droits :** Super-Admin uniquement.
+**Réponse (200 OK) :** Contient l'aperçu (`overview`), la croissance (`growth`), la distribution par rôles/médias/relations, et le top 10 des familles.
 
-### `DELETE /api/admin/users/[id]` ⭐ (Nouveau)
-**Rôle :** Supprimer un utilisateur (avec vérifications de sécurité).
+#### `GET /api/admin/activity`
+**Rôle :** Monitoring de l'activité récente en temps réel.
+**Query Params :**
+- `limit` (optional) : Nombre d'entrées (défaut : 50).
+- `type` (optional) : Filtrer par `users`, `families`, `messages`, `media`.
+**Droits :** Super-Admin uniquement.
+**Réponse (200 OK) :** Listes des derniers inscrits, dernières familles créées, derniers messages, demandes de fusion et membres en attente.
 
-### `GET /api/admin/families` ⭐ (Nouveau)
-**Rôle :** Lister toutes les familles avec statistiques.
+### 👥 Gestion des Utilisateurs
 
-### `DELETE /api/admin/families/[id]` ⭐ (Nouveau)
-**Rôle :** Supprimer une famille (avec vérifications de connexions).
+#### `GET /api/admin/users`
+**Rôle :** Liste paginée de tous les utilisateurs inscrits.
+**Query Params :** `page`, `limit`, `search` (recherche par nom ou email).
+**Réponse (200 OK) :** `{ "users": [...], "pagination": {...} }`.
 
-### `GET /api/admin/stats` ⭐ (Nouveau)
-**Rôle :** Statistiques globales de la plateforme avec croissance et distribution.
+#### `GET /api/admin/users/[id]`
+**Rôle :** Détails complets d'un utilisateur (ses familles, ses messages récents, ses médias).
 
-### `GET /api/admin/activity` ⭐ (Nouveau)
-**Rôle :** Activité récente et monitoring en temps réel.
+#### `PATCH /api/admin/users/[id]`
+**Rôle :** Modifier un utilisateur ou changer son statut admin.
+**Action "promote" :** Rend l'utilisateur Super-Admin. `body: { "action": "promote" }`.
+**Action "demote" :** Retire les droits Super-Admin. `body: { "action": "demote" }`.
+
+#### `DELETE /api/admin/users/[id]`
+**Rôle :** Suppression définitive.
+**Sécurité :** Ne peut pas se supprimer soi-même. Ne peut pas supprimer un utilisateur qui est le **seul admin** d'une famille active.
+
+### 🏠 Gestion des Familles
+
+#### `GET /api/admin/families`
+**Rôle :** Liste paginée de toutes les familles créées.
+**Query Params :** `page`, `limit`, `search`.
+
+#### `GET /api/admin/families/[id]`
+**Rôle :** Détails d'une famille : liste des membres, personnes dans l'arbre, salles de chat, médias et connexions avec d'autres familles.
+
+#### `DELETE /api/admin/families/[id]`
+**Rôle :** Suppression d'une famille.
+**Sécurité :** Bloqué si la famille possède des connexions actives avec d'autres familles (pour éviter de briser les arbres inter-familles).
 
 ---
 
-**🎯 Super-Admin System Ready !** Le système de super-administrateur est maintenant complet avec tous les endpoints nécessaires pour gérer la plateforme.
+**🎯 Super-Admin System Ready !** Tous les endpoints d'administration sont protégés par le middleware `getSuperAdminFromRequest`. Le frontend doit envoyer le jeton JWT du Super-Admin dans le header `Authorization: Bearer <token>`.

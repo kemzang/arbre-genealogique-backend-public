@@ -50,7 +50,12 @@ Une application web complète pour gérer votre arbre généalogique, partager d
    ```bash
    npx prisma generate
    npx prisma db push
+   npx prisma db seed    # Initialise le Super-Admin
    ```
+
+   **Identifiants Admin par défaut :**
+   - **Email :** `admin@family.com`
+   - **Mot de passe :** `admin123`
 
 6. **Lancer le serveur**
    ```bash
@@ -63,6 +68,7 @@ L'application sera accessible sur **http://localhost:3001**
 
 - **[SETUP.md](./SETUP.md)** - Guide complet d'installation et de configuration
 - **[API_README.md](./API_README.md)** - Documentation complète de l'API backend
+- **[SUPER_ADMIN_GUIDE.md](./SUPER_ADMIN_GUIDE.md)** - Guide de gestion pour les super-administrateurs
 
 ## 🛠️ Technologies utilisées
 
@@ -93,32 +99,40 @@ arbre_genealogique/
 └── .env                  # Configuration (à créer)
 ```
 
-## 🔑 Endpoints principaux
+## 🔑 Endpoints API (Résumé)
 
-### Authentification
+### 🛡️ Administration (Super-Admin uniquement)
+- **Dashboard** : `GET /api/admin/stats` - Glossaire des statistiques globales
+- **Monitoring** : `GET /api/admin/activity` - Flux de toutes les actions récentes
+- **Gestion Utilisateurs** :
+    - `GET /api/admin/users` - Liste paginée de tous les utilisateurs
+    - `PATCH /api/admin/users/[id]` - Promouvoir/Rétrograder (`promote`/`demote`)
+    - `DELETE /api/admin/users/[id]` - Supprimer un compte utilisateur
+- **Gestion Familles** :
+    - `GET /api/admin/families` - Liste de toutes les familles
+    - `DELETE /api/admin/families/[id]` - Supprimer une famille entière
+
+### 🌐 Authentification & Profil
 - `POST /api/users` - Créer un compte
 - `POST /api/users/login` - Se connecter
 
-### Famille
+### 🏠 Famille & Membres
 - `POST /api/family` - Créer une famille
-- `POST /api/family/join` - Rejoindre une famille
+- `POST /api/family/join` - Demander à rejoindre une famille
 - `GET /api/family/search` - Rechercher des familles
 
-### Arbre généalogique
+### 🌲 Arbre Généalogique
 - `GET /api/tree` - Récupérer l'arbre
 - `POST /api/person` - Ajouter une personne
-- `POST /api/relationship` - Créer une relation
+- `POST /api/relationship` - Créer une relation (Union, Parent, etc.)
 
-### Chat
+### 💬 Chat & Médias
 - `GET /api/chat/rooms` - Liste des salons
-- `POST /api/chat/message` - Envoyer un message
-- `GET /api/chat/messages` - Historique des messages
-
-### Médias
+- `POST /api/chat/message` - Envoyer un message (texte + médias)
 - `POST /api/media/upload` - Uploader un fichier (FormData)
-- `GET /api/family/[familyId]/media` - Liste des médias
+- `GET /api/family/[familyId]/media` - Parcourir les médias de la famille
 
-📖 **Documentation complète** : Voir [API_README.md](./API_README.md)
+📖 **Documentation technique détaillée** : Voir [API_README.md](./API_README.md)
 
 ## 🔧 Commandes utiles
 

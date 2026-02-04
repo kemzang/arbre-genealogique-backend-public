@@ -7,6 +7,10 @@ echo "🚀 Démarrage de l'application..."
 echo "⚙️ Synchronisation de la base de données..."
 npx prisma db push --accept-data-loss
 
+# Initialiser les données (Super Admin, etc.)
+echo "🌱 Initialisation des données..."
+npx prisma db seed
+
 # Lancer l'app
 echo "✅ Serveur prêt sur le port 3000"
 node server.js

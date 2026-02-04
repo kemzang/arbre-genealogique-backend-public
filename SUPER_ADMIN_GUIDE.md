@@ -2,10 +2,24 @@
 
 ## 🚀 Mise en Route
 
-### 1. Créer le Premier Super-Admin
-
-**⚠️ Important :** Cette étape ne peut être faite qu'une seule fois !
-
+### 1. Initialisation Automatique (Recommandé)
+ 
+**Désormais, le premier Super-Admin est créé automatiquement au démarrage de l'application.**
+ 
+Les identifiants par défaut sont définis dans votre fichier `.env` :
+- **Email :** `admin@family.com` (par défaut)
+- **Mot de passe :** `admin123` (par défaut)
+ 
+Vous pouvez modifier ces valeurs dans le `.env` avant le premier démarrage :
+```env
+ADMIN_EMAIL="votre@email.com"
+ADMIN_PASSWORD="votre_mot_de_passe"
+```
+ 
+### 2. Création Manuelle (Alternative)
+ 
+Si vous préférez créer un compte vous-même :
+ 
 ```bash
 # 1. Créer un compte utilisateur normal
 POST /api/users
@@ -23,7 +37,7 @@ POST /api/users/login
   "password": "motDePasseSecurise"
 }
 
-# 3. Bootstrap en super-admin (une seule fois)
+# 3. Bootstrap en super-admin (si aucun n'existe)
 POST /api/admin/bootstrap
 Headers: Authorization: Bearer <token>
 {

@@ -49,7 +49,12 @@ npx prisma generate
 #### Créer les tables
 ```bash
 npx prisma db push
+npx prisma db seed    # Initialise le Super-Admin
 ```
+
+**Identifiants Admin par défaut :**
+- **Email :** `admin@family.com`
+- **Mot de passe :** `admin123`
 
 **Ou** utiliser les migrations :
 ```bash
