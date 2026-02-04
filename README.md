@@ -102,7 +102,12 @@ arbre_genealogique/
 ## 🔑 Endpoints API (Résumé)
 
 ### 🛡️ Administration (Super-Admin uniquement)
-- **Dashboard** : `GET /api/admin/stats` - Glossaire des statistiques globales
+- **Dashboard & Stats** :
+    - `GET /api/admin/stats` - Glossaire des statistiques globales
+    - `GET /api/admin/stats/timeline` - Évolution temporelle (Graphiques)
+    - `GET /api/admin/stats/distribution` - Répartition des données (Pies)
+    - `GET /api/admin/stats/engagement` - Engagement de la communauté
+    - `GET /api/admin/stats/system` - Santé et ressources système
 - **Monitoring** : `GET /api/admin/activity` - Flux de toutes les actions récentes
 - **Gestion Utilisateurs** :
     - `GET /api/admin/users` - Liste paginée de tous les utilisateurs

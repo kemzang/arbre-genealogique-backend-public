@@ -1504,6 +1504,24 @@ Objet `Message` créé, incluant les attachements (tableau `attachments`).
 **Droits :** Super-Admin uniquement.
 **Réponse (200 OK) :** Contient l'aperçu (`overview`), la croissance (`growth`), la distribution par rôles/médias/relations, et le top 10 des familles.
 
+#### `GET /api/admin/stats/timeline` ⭐ (Nouveau)
+**Rôle :** Évolution temporelle pour les graphiques de croissance.
+**Query Params :**
+- `period` : `7d`, `30d`, `90d`, `1y` (défaut : `30d`).
+**Contenu :** Nouveaux utilisateurs, familles, messages et médias par jour/mois.
+
+#### `GET /api/admin/stats/distribution` ⭐ (Nouveau)
+**Rôle :** Répartition des données pour les graphiques circulaires/secteurs (Pie charts).
+**Contenu :** Rôles utilisateurs, répartition de la taille des familles, types de médias et pics d'activité horaire.
+
+#### `GET /api/admin/stats/engagement` ⭐ (Nouveau)
+**Rôle :** Mesure de la santé et de l'activité de la communauté.
+**Contenu :** Utilisateurs actifs (30j) vs inactifs, ratio d'engagement et Top 10 des familles les plus prolifiques.
+
+#### `GET /api/admin/stats/system` ⭐ (Nouveau)
+**Rôle :** Santé technique et ressources.
+**Contenu :** Estimation de l'espace disque utilisé par type de média, uptime serveur et métriques de performance.
+
 #### `GET /api/admin/activity`
 **Rôle :** Monitoring de l'activité récente en temps réel.
 **Query Params :**
