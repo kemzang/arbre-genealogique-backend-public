@@ -2,7 +2,8 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+# Skip postinstall (prisma generate) here: prisma/ not copied yet. Run in builder stage.
+RUN npm install --ignore-scripts
 
 # --- Stage 2: Builder ---
 FROM node:20-alpine AS builder
@@ -36,6 +37,8 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY docker-start.sh ./
+# Fix Windows CRLF → LF so ./docker-start.sh runs in Alpine
+RUN sed -i 's/\r$//' docker-start.sh
 
 # Set permissions
 RUN chmod +x docker-start.sh && chown -R node:node /app

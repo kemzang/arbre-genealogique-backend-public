@@ -6,7 +6,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: family_tree
     ports:
-      - "3306:3306"
+      - "3307:3306"   # host:container — 3307 to avoid conflict with local MySQL on 3306
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:

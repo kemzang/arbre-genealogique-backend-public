@@ -24,8 +24,22 @@ model User {
   messages               Message[]
   linkedPersons          Person[]               @relation("UserLinkedPersons")
   mergeRequests          FamilyMergeRequest[]
+  passwordResetTokens    PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "password_reset_tokens_user_id_fkey")
+  @@map("password_reset_tokens")
 }
 
 model Family {
