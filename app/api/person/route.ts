@@ -19,6 +19,14 @@ export async function POST(req: Request) {
     if (!active)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    // Enforce write permissions: only ADMIN or EDITOR can create persons
+    if (active.role === "VIEWER") {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions to create person" },
+        { status: 403 },
+      );
+    }
+
     const data: any = {
       familyId,
       firstName: body.firstName ?? null,
@@ -33,8 +41,8 @@ export async function POST(req: Request) {
 
     const person = await prisma.person.create({ data });
 
-    // If a user is linked to this person, automatically make them an ACTIVE member of the family
-    // and add them to the General chat room
+    // If a user is linked to this person, optionally adjust their membership in the family.
+    // Only ADMIN/EDITOR can act as "gatekeepers" to make them ACTIVE immediately.
     if (body.linkedUserId) {
       const linkedUserId = parseInt(body.linkedUserId);
       
@@ -42,19 +50,27 @@ export async function POST(req: Request) {
         where: { userId: linkedUserId, familyId }
       });
 
-      if (!existingMember) {
-        await prisma.member.create({
+      let targetMember = existingMember;
+
+      if (!targetMember) {
+        targetMember = await prisma.member.create({
           data: {
             userId: linkedUserId,
             familyId,
             role: "VIEWER",
-            status: "ACTIVE"
+            status:
+              active.role === "ADMIN" || active.role === "EDITOR"
+                ? "ACTIVE"
+                : "PENDING",
           }
         });
-      } else if (existingMember.status !== "ACTIVE") {
-        await prisma.member.update({
-          where: { id: existingMember.id },
-          data: { status: "ACTIVE" }
+      } else if (
+        targetMember.status !== "ACTIVE" &&
+        (active.role === "ADMIN" || active.role === "EDITOR")
+      ) {
+        targetMember = await prisma.member.update({
+          where: { id: targetMember.id },
+          data: { status: "ACTIVE" },
         });
       }
 
@@ -67,28 +83,32 @@ export async function POST(req: Request) {
           });
       }
 
-      // Add to ALL Public chat rooms
-      const publicRooms = await prisma.chatRoom.findMany({
-        where: { familyId, channelType: "PUBLIC" }
-      });
+      // Add to ALL Public chat rooms only if the linked user is ACTIVE in the family
+      if (targetMember.status === "ACTIVE") {
+        const publicRooms = await prisma.chatRoom.findMany({
+          where: { familyId, channelType: "PUBLIC" },
+        });
 
-      if (publicRooms.length > 0) {
-        await Promise.all(publicRooms.map(room => 
-          prisma.chatRoomParticipant.upsert({
-            where: {
-              chatRoomId_userId: {
-                chatRoomId: room.id,
-                userId: linkedUserId
-              }
-            },
-            update: {},
-            create: {
-              chatRoomId: room.id,
-              userId: linkedUserId,
-              role: "MEMBER"
-            }
-          })
-        ));
+        if (publicRooms.length > 0) {
+          await Promise.all(
+            publicRooms.map((room) =>
+              prisma.chatRoomParticipant.upsert({
+                where: {
+                  chatRoomId_userId: {
+                    chatRoomId: room.id,
+                    userId: linkedUserId,
+                  },
+                },
+                update: {},
+                create: {
+                  chatRoomId: room.id,
+                  userId: linkedUserId,
+                  role: "MEMBER",
+                },
+              }),
+            ),
+          );
+        }
       }
     }
 

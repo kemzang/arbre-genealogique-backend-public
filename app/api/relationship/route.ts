@@ -63,7 +63,18 @@ export async function POST(req: Request) {
     });
     
     if (!active)
-      return NextResponse.json({ error: "Forbidden: You are not an active member of involved families" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Forbidden: You are not an active member of involved families" },
+        { status: 403 },
+      );
+
+    // Enforce write permissions: only ADMIN or EDITOR can create relationships
+    if (active.role === "VIEWER") {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions to create relationship" },
+        { status: 403 },
+      );
+    }
 
     const rel = await prisma.relationship.create({
       data: { 

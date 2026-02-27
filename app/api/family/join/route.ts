@@ -13,6 +13,17 @@ export async function POST(req: Request) {
     if (!familyId)
       return NextResponse.json({ error: "familyId required" }, { status: 400 });
 
+    // Ensure the target family exists
+    const family = await prisma.family.findUnique({
+      where: { id: familyId },
+    });
+    if (!family) {
+      return NextResponse.json(
+        { error: "Family not found" },
+        { status: 404 },
+      );
+    }
+
     // prevent duplicate
     const existing = await prisma.member.findFirst({
       where: { userId: user.id, familyId },

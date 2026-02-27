@@ -26,7 +26,11 @@ export async function GET(req: Request) {
         { status: 404 },
       );
     const member = await prisma.member.findFirst({
-      where: { userId: user.id, familyId: chatRoom.familyId },
+      where: {
+        userId: user.id,
+        familyId: chatRoom.familyId,
+        status: "ACTIVE",
+      },
     });
     if (!member)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

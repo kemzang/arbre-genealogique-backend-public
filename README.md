@@ -118,8 +118,18 @@ arbre_genealogique/
     - `DELETE /api/admin/families/[id]` - Supprimer une famille entière
 
 ### 🌐 Authentification & Profil
-- `POST /api/users` - Créer un compte
-- `POST /api/users/login` - Se connecter
+- **POST `/api/users`**: Créer un compte  
+  - Body : `{ "email", "password", "name", "profilePictureUrl" }`  
+  - Réponse : utilisateur sans `passwordHash`.
+- **POST `/api/users/login`**: Se connecter  
+  - Body : `{ "email", "password" }`  
+  - Réponse : `{ "token", "user" }` (JWT + infos utilisateur).
+- **POST `/api/users/forgot-password`**: Demander la réinitialisation du mot de passe  
+  - Body : `{ "email" }`  
+  - Réponse : `{ "message" }` (+ `resetToken` renvoyé en dev pour tester le front).
+- **POST `/api/users/reset-password`**: Changer le mot de passe avec un token  
+  - Body : `{ "token", "password" }`  
+  - Réponse : `{ "message" }`.
 
 ### 🏠 Famille & Membres
 - `POST /api/family` - Créer une famille

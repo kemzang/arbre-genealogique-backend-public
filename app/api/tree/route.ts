@@ -11,15 +11,13 @@ export async function GET(req: Request) {
       : undefined;
 
     const user = await getUserFromRequest(req);
-    if (!user && !familyId)
-      return NextResponse.json(
-        { error: "Unauthorized or familyId required" },
-        { status: 401 },
-      );
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (!familyId) {
       const membership = await prisma.member.findFirst({
-        where: { userId: user!.id, status: "ACTIVE" },
+        where: { userId: user.id, status: "ACTIVE" },
       });
       if (!membership)
         return NextResponse.json(
@@ -45,6 +43,22 @@ export async function GET(req: Request) {
     
     // List of families to include (primary + connected)
     const allFamilyIds = [familyId, ...connectedFamilyIds];
+
+    // Ensure the user is an ACTIVE member of at least one of the involved families
+    const authorizedMembership = await prisma.member.findFirst({
+      where: {
+        userId: user.id,
+        status: "ACTIVE",
+        familyId: { in: allFamilyIds },
+      },
+    });
+
+    if (!authorizedMembership) {
+      return NextResponse.json(
+        { error: "Forbidden: not a member of this family network" },
+        { status: 403 },
+      );
+    }
 
     const persons = await prisma.person.findMany({ 
         where: { familyId: { in: allFamilyIds } } 
