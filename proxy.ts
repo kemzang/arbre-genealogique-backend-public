@@ -12,7 +12,13 @@ export function proxy(request: NextRequest) {
   const origin = request.headers.get('origin') ?? ''
   
   // Liste des origines autorisées
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://localhost:5174']
+  const allowedOrigins = [
+    'http://localhost:3000', 
+    'http://localhost:3001', 
+    'http://localhost:5173', 
+    'http://localhost:5174',
+    process.env.FRONTEND_URL || '' // URL du frontend en production
+  ].filter(Boolean)
   
   // Vérifier si l'origine est autorisée
   const isAllowed = allowedOrigins.includes(origin) || !origin // !origin pour les requêtes serveur à serveur ou Postman
