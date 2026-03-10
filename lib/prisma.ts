@@ -12,9 +12,9 @@ let dbUrl = rawEnvUrl
       .trim()
   : undefined;
 
-// Ensure protocol compatibility with Prisma mysql provider
-if (dbUrl && dbUrl.startsWith("mariadb://")) {
-  dbUrl = dbUrl.replace("mariadb://", "mysql://");
+// Optional: normalize postgres URL (e.g. postgres:// → postgresql:// for Prisma)
+if (dbUrl && dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
+  dbUrl = dbUrl.replace("postgres://", "postgresql://");
 }
 
 // Override environment variable directly to avoid constructor validation issues

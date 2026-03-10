@@ -1,6 +1,21 @@
-# 📋 Résumé des Modifications - 28 Janvier 2026
+# 📋 Résumé des Modifications
 
-## 🎯 Problème résolu
+## 2026 - Passage à PostgreSQL
+
+- **Base de données** : MySQL remplacé par **PostgreSQL**.
+- **Fichiers modifiés** :
+  - `prisma/schema.prisma` : `provider = "postgresql"`, `@db.LongText` → `@db.Text` pour `Member.applicationData`.
+  - `prisma/migrations/migration_lock.toml` : `provider = "postgresql"`.
+  - `prisma.config.ts` : URL de fallback en `postgresql://...`.
+  - `lib/prisma.ts` : normalisation `postgres://` → `postgresql://` (plus de mariadb→mysql).
+  - `docker-compose.yml` : image `postgres:16-alpine`, port 5432, variables `POSTGRES_*`, volume `postgres_data`.
+  - `Dockerfile` : `DATABASE_URL` au format PostgreSQL.
+  - `README.md` : prérequis et exemples `.env` pour PostgreSQL.
+- **À faire après mise à jour** : recréer les tables (les anciennes migrations MySQL ne s’appliquent pas). Sur une base PostgreSQL vide : `npx prisma db push` puis `npx prisma db seed`.
+
+---
+
+## 28 Janvier 2026 - Problème résolu
 
 **Erreur initiale** : `PrismaClientConstructorValidationError: Using engine type "client" requires either "adapter" or "accelerateUrl"`
 

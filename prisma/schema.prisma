@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -38,7 +38,7 @@ model PasswordResetToken {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId], map: "password_reset_tokens_user_id_fkey")
+  @@index([userId])
   @@map("password_reset_tokens")
 }
 
@@ -69,13 +69,13 @@ model Member {
   role            Role                   @default(VIEWER)
   status          MemberStatus           @default(PENDING)
   joinedAt        DateTime               @default(now()) @map("joined_at")
-  applicationData String?                @map("application_data") @db.LongText
+  applicationData String?                @map("application_data") @db.Text
   family          Family                 @relation(fields: [familyId], references: [id], onDelete: Cascade)
   user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   validations     MembershipValidation[] @relation("targetValidations")
 
-  @@index([familyId], map: "members_family_id_fkey")
-  @@index([userId], map: "members_user_id_fkey")
+  @@index([familyId])
+  @@index([userId])
   @@map("members")
 }
 
@@ -89,7 +89,7 @@ model MembershipValidation {
   validator      User     @relation("ValidationsByUser", fields: [validatorId], references: [id], onDelete: Cascade)
 
   @@unique([targetMemberId, validatorId])
-  @@index([validatorId], map: "membership_validations_validator_id_fkey")
+  @@index([validatorId])
   @@map("membership_validations")
 }
 
@@ -116,8 +116,8 @@ model Person {
   sourceRequests    FamilyMergeRequest[] @relation("SourcePersonRequests")
   targetRequests    FamilyMergeRequest[] @relation("TargetPersonRequests")
 
-  @@index([familyId], map: "persons_family_id_fkey")
-  @@index([linkedUserId], map: "persons_linked_user_id_fkey")
+  @@index([familyId])
+  @@index([linkedUserId])
   @@map("persons")
 }
 
@@ -138,8 +138,8 @@ model Relationship {
   personA      Person           @relation("relA", fields: [personAId], references: [id], onDelete: Cascade)
   personB      Person           @relation("relB", fields: [personBId], references: [id], onDelete: Cascade)
 
-  @@index([personAId], map: "relationships_person_a_id_fkey")
-  @@index([personBId], map: "relationships_person_b_id_fkey")
+  @@index([personAId])
+  @@index([personBId])
   @@map("relationships")
 }
 
@@ -193,8 +193,8 @@ model ChatRoom {
   family       Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
   messages     Message[]
 
-  @@index([creatorId], map: "chat_rooms_creator_id_fkey")
-  @@index([familyId], map: "chat_rooms_family_id_fkey")
+  @@index([creatorId])
+  @@index([familyId])
   @@map("chat_rooms")
 }
 
@@ -208,7 +208,7 @@ model ChatRoomParticipant {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([chatRoomId, userId])
-  @@index([userId], map: "chat_room_participants_user_id_fkey")
+  @@index([userId])
   @@map("chat_room_participants")
 }
 
@@ -222,8 +222,8 @@ model Message {
   chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   sender      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
-  @@index([chatRoomId], map: "messages_chat_room_id_fkey")
-  @@index([senderId], map: "messages_sender_id_fkey")
+  @@index([chatRoomId])
+  @@index([senderId])
   @@map("messages")
 }
 
@@ -243,8 +243,8 @@ model FamilyEvent {
   media          Media[]
   sharedFamilies FamilyEventOnFamily[]
 
-  @@index([creatorId], map: "family_events_creator_id_fkey")
-  @@index([targetPersonId], map: "family_events_target_person_id_fkey")
+  @@index([creatorId])
+  @@index([targetPersonId])
   @@map("family_events")
 }
 
@@ -266,7 +266,7 @@ model EventGuest {
   person   Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, personId])
-  @@index([personId], map: "event_guests_person_id_fkey")
+  @@index([personId])
   @@map("event_guests")
 }
 
@@ -285,11 +285,11 @@ model Media {
   person     Person?      @relation(fields: [personId], references: [id])
   uploader   User         @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
 
-  @@index([eventId], map: "media_event_id_fkey")
-  @@index([familyId], map: "media_family_id_fkey")
-  @@index([messageId], map: "media_message_id_fkey")
-  @@index([personId], map: "media_person_id_fkey")
-  @@index([uploaderId], map: "media_uploader_id_fkey")
+  @@index([eventId])
+  @@index([familyId])
+  @@index([messageId])
+  @@index([personId])
+  @@index([uploaderId])
   @@map("media")
 }
 

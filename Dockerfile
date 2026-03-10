@@ -12,7 +12,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma Client (provide a dummy URL for build time validation)
-ENV DATABASE_URL="mysql://root:root@db:3306/family_tree"
+ENV DATABASE_URL="postgresql://postgres:root@db:5432/family_tree"
 RUN npx prisma generate
 
 # Build the app

@@ -15,7 +15,7 @@ Une application web complète pour gérer votre arbre généalogique, partager d
 
 ### Prérequis
 - Node.js 20+
-- MySQL 8.0+
+- PostgreSQL 14+
 - npm
 
 ### Installation
@@ -33,25 +33,26 @@ Une application web complète pour gérer votre arbre généalogique, partager d
 
 3. **Configurer la base de données**
    
-   Créez une base de données MySQL :
+   Créez une base de données PostgreSQL :
    ```sql
-   CREATE DATABASE family_tree CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE family_tree;
    ```
 
 4. **Configurer les variables d'environnement**
    
    Créez un fichier `.env` à la racine :
    ```env
-   DATABASE_URL="mysql://root@localhost:3306/family_tree"
+   DATABASE_URL="postgresql://postgres:VOTRE_MDP@localhost:5432/family_tree"
    JWT_SECRET="change_me_to_a_strong_secret"
    ```
 
 5. **Initialiser la base de données**
    ```bash
    npx prisma generate
-   npx prisma db push
+   npx prisma db push    # Crée les tables (PostgreSQL)
    npx prisma db seed    # Initialise le Super-Admin
    ```
+   **Note** : Les anciennes migrations dans `prisma/migrations` ont été créées pour MySQL. Avec PostgreSQL, utilisez `prisma db push` pour synchroniser le schéma, ou supprimez le contenu du dossier `migrations` (gardez `migration_lock.toml`) puis `npx prisma migrate dev --name init_postgres`.
 
    **Identifiants Admin par défaut :**
    - **Email :** `admin@family.com`
@@ -74,7 +75,7 @@ L'application sera accessible sur **http://localhost:3001**
 
 - **Frontend** : Next.js 16, React 19, TailwindCSS
 - **Backend** : Next.js API Routes
-- **Base de données** : MySQL + Prisma ORM 6.x
+- **Base de données** : PostgreSQL + Prisma ORM 6.x
 - **Authentification** : JWT (jsonwebtoken)
 - **Upload de fichiers** : Système local (public/uploads)
 
@@ -196,7 +197,7 @@ Plus de détails dans [SETUP.md](./SETUP.md)
 
 ### 2026-01-28
 - ✅ Upload de fichiers via FormData
-- ✅ Configuration MySQL avec Prisma 6.x
+- ✅ Configuration PostgreSQL avec Prisma 6.x
 - ✅ Système de chat avec salons publics/privés
 - ✅ Gestion complète de l'arbre généalogique
 

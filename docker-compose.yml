@@ -1,16 +1,17 @@
 services:
   db:
-    image: mysql:8.0
+    image: postgres:16-alpine
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: family_tree
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: family_tree
     ports:
-      - "3307:3306"   # host:container — 3307 to avoid conflict with local MySQL on 3306
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d family_tree"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,7 +24,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      DATABASE_URL: "mysql://root:root@db:3306/family_tree"
+      DATABASE_URL: "postgresql://postgres:root@db:5432/family_tree"
       JWT_SECRET: "strong_secret_for_production_replace_me"
     depends_on:
       db:
@@ -32,5 +33,5 @@ services:
       - uploads_data:/app/public/uploads
 
 volumes:
-  mysql_data:
+  postgres_data:
   uploads_data:
