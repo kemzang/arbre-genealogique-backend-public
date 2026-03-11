@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const RESET_TOKEN_EXPIRATION_HOURS = 1;
 
@@ -42,13 +43,20 @@ export async function POST(req: Request) {
       },
     });
 
-    // TODO: Envoyer un email avec le lien contenant le token
-    // Pour l'instant, on renvoie le token dans la réponse pour faciliter le développement.
+    // Envoyer l'email de réinitialisation
+    try {
+      await sendPasswordResetEmail(email, token);
+    } catch (emailError) {
+      console.error('Failed to send reset email:', emailError);
+      return NextResponse.json(
+        { error: "Erreur lors de l'envoi de l'email" },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json(
       {
-        message: "Lien de réinitialisation généré.",
-        resetToken: token,
+        message: "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.",
       },
       { status: 200 },
     );

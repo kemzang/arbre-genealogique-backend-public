@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import type { User } from '@prisma/client';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +26,11 @@ export async function POST(req: Request) {
         profilePictureUrl, // Save the photo URL
       },
     });
+
+    // Envoyer l'email de bienvenue (ne pas bloquer si ça échoue)
+    sendWelcomeEmail(email, name || email).catch(err => 
+      console.error('Failed to send welcome email:', err)
+    );
 
     // don't return the password hash
     const { passwordHash: _ph, ...safeUser } = newUser as User;
