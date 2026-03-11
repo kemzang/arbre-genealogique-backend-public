@@ -2,6 +2,44 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 
+export async function GET(req: Request) {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Get all families where user is a member
+    const memberships = await prisma.member.findMany({
+      where: { userId: user.id, status: "ACTIVE" },
+      select: { familyId: true }
+    });
+
+    const familyIds = memberships.map(m => m.familyId);
+
+    // Get all fusion requests related to user's families
+    const requests = await prisma.familyMergeRequest.findMany({
+      where: {
+        OR: [
+          { sourceFamilyId: { in: familyIds } },
+          { targetFamilyId: { in: familyIds } }
+        ]
+      },
+      include: {
+        sourceFamily: { select: { familyName: true } },
+        targetFamily: { select: { familyName: true } },
+        sourcePerson: { select: { firstName: true, lastName: true } },
+        targetPerson: { select: { firstName: true, lastName: true } },
+        requester: { select: { displayName: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return NextResponse.json(requests);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to fetch fusion requests" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
