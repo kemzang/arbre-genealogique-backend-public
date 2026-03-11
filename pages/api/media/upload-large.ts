@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import { promises as fs } from 'fs';
-import path from 'path';
 import { prisma } from '@/lib/prisma';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import jwt from 'jsonwebtoken';
 
 // Désactiver le bodyParser de Next.js pour gérer les fichiers
@@ -61,22 +61,9 @@ export default async function handler(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Créer le dossier uploads s'il n'existe pas
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    // Configurer formidable
+    // Configurer formidable pour parser en mémoire
     const form = formidable({
-      uploadDir,
-      keepExtensions: true,
       maxFileSize: 100 * 1024 * 1024, // 100MB
-      filename: (name, ext, part) => {
-        // Générer un nom unique
-        const timestamp = Date.now();
-        const originalName = part.originalFilename || 'file';
-        const sanitized = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
-        return `${timestamp}-${sanitized}`;
-      },
     });
 
     // Parser le formulaire
@@ -113,17 +100,26 @@ export default async function handler(
     });
 
     if (!member) {
-      // Supprimer le fichier uploadé
-      await fs.unlink(file.filepath);
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    // Le fichier est déjà dans public/uploads grâce à formidable
-    // On récupère juste le nom du fichier
-    const fileName = path.basename(file.filepath);
-    const urlPath = `/uploads/${fileName}`;
+    // Lire le fichier en buffer
+    const fileBuffer = await fs.readFile(file.filepath);
 
-    console.log('✅ Fichier sauvegardé:', urlPath, `(${file.size} bytes)`);
+    // Déterminer le dossier Cloudinary selon le type
+    let folder = 'media';
+    if (personId) folder = 'profiles';
+    else if (eventId) folder = 'events';
+
+    // Upload vers Cloudinary
+    console.log('☁️ Upload vers Cloudinary...');
+    const uploadResult = await uploadToCloudinary(fileBuffer, folder);
+    const urlPath = uploadResult.secure_url;
+
+    console.log('✅ Fichier uploadé sur Cloudinary:', urlPath);
+
+    // Supprimer le fichier temporaire
+    await fs.unlink(file.filepath).catch(() => {});
 
     // Enregistrer dans la base de données
     const data: any = { familyId, uploaderId: user.id, urlPath, mediaType };

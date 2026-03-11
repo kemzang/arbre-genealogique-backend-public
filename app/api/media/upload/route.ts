@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 // Configuration de la taille maximale pour les uploads (100MB)
 export const maxDuration = 60; // Timeout de 60 secondes
@@ -67,26 +66,29 @@ export async function POST(req: Request) {
     if (!member)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    // Créer le dossier uploads s'il n'existe pas
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
-
-    // Générer un nom de fichier unique
-    const timestamp = Date.now();
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const fileName = `${timestamp}-${sanitizedFileName}`;
-    const filePath = path.join(uploadDir, fileName);
-    const urlPath = `/uploads/${fileName}`;
-
-    // Sauvegarder le fichier
+    // Convertir le fichier en buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
 
-    console.log("✅ Fichier sauvegardé:", urlPath, `(${file.size} bytes)`);
+    // Déterminer le dossier Cloudinary selon le type
+    let folder = 'media';
+    if (personId) folder = 'profiles';
+    else if (eventId) folder = 'events';
+
+    // Upload vers Cloudinary
+    console.log("☁️ Upload vers Cloudinary...");
+    const uploadResult = await uploadToCloudinary(buffer, folder);
+    const urlPath = uploadResult.secure_url;
+
+    console.log("✅ Fichier uploadé sur Cloudinary:", urlPath);
 
     // Enregistrer dans la base de données
-    const data: any = { familyId, uploaderId: user.id, urlPath, mediaType };
+    const data: any = { 
+      familyId, 
+      uploaderId: user.id, 
+      urlPath, 
+      mediaType 
+    };
     if (personId) data.personId = personId;
     if (eventId) data.eventId = eventId;
 
