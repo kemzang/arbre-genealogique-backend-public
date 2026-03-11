@@ -169,3 +169,58 @@ export async function GET(
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
+    const user = await getUserFromRequest(req);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const body = await req.json();
+    const { firstName, lastName, birthDate, deathDate, gender, bio, profilePictureUrl } = body;
+
+    // Get person to check family membership
+    const person = await prisma.person.findUnique({
+      where: { id }
+    });
+
+    if (!person) return NextResponse.json({ error: "Person not found" }, { status: 404 });
+
+    // Check if user is an active member with ADMIN or EDITOR role
+    const member = await prisma.member.findFirst({
+      where: { 
+        userId: user.id, 
+        familyId: person.familyId, 
+        status: "ACTIVE",
+        role: { in: ["ADMIN", "EDITOR"] }
+      }
+    });
+
+    if (!member) return NextResponse.json({ error: "Forbidden: You must be an admin or editor" }, { status: 403 });
+
+    // Update person
+    const data: any = {};
+    if (firstName !== undefined) data.firstName = firstName;
+    if (lastName !== undefined) data.lastName = lastName;
+    if (birthDate !== undefined) data.birthDate = birthDate ? new Date(birthDate) : null;
+    if (deathDate !== undefined) data.deathDate = deathDate ? new Date(deathDate) : null;
+    if (gender !== undefined) data.gender = gender;
+    if (bio !== undefined) data.bio = bio;
+    if (profilePictureUrl !== undefined) data.profilePictureUrl = profilePictureUrl;
+
+    const updatedPerson = await prisma.person.update({
+      where: { id },
+      data
+    });
+
+    return NextResponse.json(updatedPerson);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to update person" }, { status: 500 });
+  }
+}
+
