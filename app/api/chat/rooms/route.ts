@@ -25,22 +25,21 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Only show rooms where user is an active participant (leftAt is null)
     const rooms = await prisma.chatRoom.findMany({
       where: {
         familyId,
-        OR: [
-          { channelType: "PUBLIC" },
-          {
-            channelType: "PRIVATE",
-            participants: {
-              some: { userId: user.id }
-            }
+        participants: {
+          some: { 
+            userId: user.id,
+            leftAt: null
           }
-        ]
+        }
       },
       include: {
         _count: { select: { messages: true } },
         participants: {
+          where: { leftAt: null },
           include: {
              user: { select: { id: true, displayName: true } }
           }

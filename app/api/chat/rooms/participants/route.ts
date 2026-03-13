@@ -39,10 +39,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // For private rooms, verify user is a participant
+    // For private rooms, verify user is an active participant
     if (room.channelType === "PRIVATE") {
       const isParticipant = await prisma.chatRoomParticipant.findFirst({
-        where: { chatRoomId, userId: user.id }
+        where: { 
+          chatRoomId, 
+          userId: user.id,
+          leftAt: null
+        }
       });
 
       if (!isParticipant) {
@@ -50,9 +54,12 @@ export async function GET(req: Request) {
       }
     }
 
-    // Get all participants
+    // Get all active participants
     const participants = await prisma.chatRoomParticipant.findMany({
-      where: { chatRoomId },
+      where: { 
+        chatRoomId,
+        leftAt: null
+      },
       include: {
         user: {
           select: {

@@ -21,7 +21,10 @@ export async function POST(req: Request) {
       where: { id: chatRoomId },
       include: {
         participants: {
-          where: { role: "ADMIN" }
+          where: { 
+            role: "ADMIN",
+            leftAt: null
+          }
         }
       }
     });
@@ -30,9 +33,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Chat room not found" }, { status: 404 });
     }
 
-    // Check if user is a participant
+    // Check if user is an active participant
     const participant = await prisma.chatRoomParticipant.findFirst({
-      where: { chatRoomId, userId: user.id }
+      where: { 
+        chatRoomId, 
+        userId: user.id,
+        leftAt: null
+      }
     });
 
     if (!participant) {
@@ -48,13 +55,16 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // Remove participant
-    await prisma.chatRoomParticipant.delete({
+    // Mark participant as left (soft delete)
+    await prisma.chatRoomParticipant.update({
       where: {
         chatRoomId_userId: {
           chatRoomId,
           userId: user.id
         }
+      },
+      data: {
+        leftAt: new Date()
       }
     });
 

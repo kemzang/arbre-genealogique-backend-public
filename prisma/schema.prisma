@@ -199,13 +199,14 @@ model ChatRoom {
 }
 
 model ChatRoomParticipant {
-  id         Int      @id @default(autoincrement())
-  chatRoomId Int      @map("chat_room_id")
-  userId     Int      @map("user_id")
-  role       ChatRole @default(MEMBER)
-  joinedAt   DateTime @default(now()) @map("joined_at")
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         Int       @id @default(autoincrement())
+  chatRoomId Int       @map("chat_room_id")
+  userId     Int       @map("user_id")
+  role       ChatRole  @default(MEMBER)
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+  leftAt     DateTime? @map("left_at")
+  chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([chatRoomId, userId])
   @@index([userId])

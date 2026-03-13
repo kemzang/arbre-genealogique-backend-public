@@ -20,6 +20,7 @@ export async function GET(
       include: {
         _count: { select: { messages: true } },
         participants: {
+          where: { leftAt: null },
           include: {
             user: { 
               select: { 
@@ -62,9 +63,9 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // For private rooms, verify user is a participant
+    // For private rooms, verify user is an active participant
     if (room.channelType === "PRIVATE") {
-      const isParticipant = room.participants.some(p => p.userId === user.id);
+      const isParticipant = room.participants.some(p => p.userId === user.id && p.leftAt === null);
       if (!isParticipant) {
         return NextResponse.json({ 
           error: "Forbidden: You are not a participant of this private room" 
