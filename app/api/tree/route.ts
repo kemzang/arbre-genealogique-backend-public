@@ -71,6 +71,7 @@ export async function GET(req: Request) {
           { personAId: { in: personIds } },
           { personBId: { in: personIds } },
         ],
+        deletedAt: null
       },
     });
 

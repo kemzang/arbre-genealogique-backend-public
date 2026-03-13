@@ -134,6 +134,7 @@ model Relationship {
   endDate      DateTime?        @map("end_date")      // Date de fin (divorce, décès, etc.)
   endReason    String?          @map("end_reason")    // Raison de la fin (divorce, décès, etc.)
   notes        String?          @map("notes")         // Notes additionnelles
+  deletedAt    DateTime?        @map("deleted_at")    // Soft delete
   
   personA      Person           @relation("relA", fields: [personAId], references: [id], onDelete: Cascade)
   personB      Person           @relation("relB", fields: [personBId], references: [id], onDelete: Cascade)
@@ -236,6 +237,7 @@ model FamilyEvent {
   creatorId      Int?            @map("creator_id")
   visibility     EventVisibility @default(PUBLIC)
   targetPersonId Int?            @map("target_person_id")
+  deletedAt      DateTime?       @map("deleted_at")
   
   creator        User?           @relation("EventCreator", fields: [creatorId], references: [id])
   targetPerson   Person?         @relation("EventTargetBranch", fields: [targetPersonId], references: [id])

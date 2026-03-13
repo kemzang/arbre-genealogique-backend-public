@@ -87,7 +87,8 @@ export async function GET(
       where: {
         sharedFamilies: {
             some: { familyId }
-        }
+        },
+        deletedAt: null
       },
       include: {
         _count: {

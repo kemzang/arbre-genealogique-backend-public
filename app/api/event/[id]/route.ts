@@ -57,7 +57,7 @@ export async function GET(
       }
     });
 
-    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    if (!event || event.deletedAt !== null) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
     // Check visibility
     if (event.creatorId !== user.id) {
@@ -169,9 +169,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await prisma.familyEvent.delete({ where: { id } });
+    // Soft delete
+    await prisma.familyEvent.update({ 
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "Event deleted successfully" });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to delete event" }, { status: 500 });

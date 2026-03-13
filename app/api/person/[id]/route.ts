@@ -16,6 +16,7 @@ export async function GET(
       where: { id },
       include: {
         relationshipsA: {
+            where: { deletedAt: null },
             include: { 
               personB: true 
             },
@@ -25,6 +26,7 @@ export async function GET(
             ]
         },
         relationshipsB: {
+            where: { deletedAt: null },
             include: { 
               personA: true 
             },

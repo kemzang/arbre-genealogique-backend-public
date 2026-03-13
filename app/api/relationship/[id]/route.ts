@@ -143,11 +143,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await prisma.relationship.delete({
-      where: { id }
+    // Soft delete
+    await prisma.relationship.update({
+      where: { id },
+      data: { deletedAt: new Date() }
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "Relationship deleted successfully" });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to delete relationship" }, { status: 500 });

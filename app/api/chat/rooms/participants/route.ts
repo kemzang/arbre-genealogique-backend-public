@@ -158,14 +158,18 @@ export async function DELETE(req: Request) {
       
       // Prevent removing oneself if they are the last admin? (Optional complexity, skipping for now)
 
-      await prisma.chatRoomParticipant.deleteMany({
+      // Soft delete using leftAt
+      await prisma.chatRoomParticipant.updateMany({
           where: {
               chatRoomId,
               userId: userIdToRemove
+          },
+          data: {
+              leftAt: new Date()
           }
       });
   
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, message: "Participant removed successfully" });
     } catch (err) {
       console.error(err);
       return NextResponse.json({ error: "Failed to remove participant" }, { status: 500 });
