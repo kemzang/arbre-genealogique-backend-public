@@ -13,7 +13,11 @@ export async function POST(req: Request) {
     const { chatRoomId } = body;
 
     if (!chatRoomId) {
-      return NextResponse.json({ error: "chatRoomId required" }, { status: 400 });
+      return NextResponse.json({ 
+        error: "Paramètre manquant",
+        message: "L'identifiant du salon (chatRoomId) est requis.",
+        reason: "MISSING_PARAMETER"
+      }, { status: 400 });
     }
 
     // Verify room exists and get active admin count
@@ -22,38 +26,56 @@ export async function POST(req: Request) {
     });
 
     if (!room) {
-      return NextResponse.json({ error: "Chat room not found" }, { status: 404 });
+      return NextResponse.json({ 
+        error: "Salon introuvable",
+        message: "Le salon de discussion demandé n'existe pas.",
+        reason: "ROOM_NOT_FOUND"
+      }, { status: 404 });
     }
 
     // Check if user is an active participant
     const participant = await prisma.chatRoomParticipant.findFirst({
       where: { 
         chatRoomId, 
-        userId: user.id,
-        leftAt: null
+        userId: user.id
       }
     });
 
     if (!participant) {
       return NextResponse.json({ 
-        error: "You are not a participant of this room" 
+        error: "Accès refusé",
+        message: "Vous n'êtes pas membre de ce salon de discussion.",
+        reason: "NOT_PARTICIPANT"
+      }, { status: 403 });
+    }
+
+    // Check if already left
+    if (participant.leftAt !== null) {
+      return NextResponse.json({ 
+        error: "Action impossible",
+        message: "Vous avez déjà quitté ce salon.",
+        reason: "ALREADY_LEFT"
       }, { status: 400 });
     }
 
     // Prevent last admin from leaving
     if (participant.role === "ADMIN") {
-      const activeAdminCount = await prisma.chatRoomParticipant.count({
+      const activeAdmins = await prisma.chatRoomParticipant.findMany({
         where: {
           chatRoomId,
-          role: "ADMIN",
-          leftAt: null
+          role: "ADMIN"
         }
       });
 
+      // Count admins who haven't left
+      const activeAdminCount = activeAdmins.filter(a => a.leftAt === null).length;
+
       if (activeAdminCount === 1) {
         return NextResponse.json({ 
-          error: "Cannot leave: You are the last admin. Please assign another admin first or delete the room." 
-        }, { status: 400 });
+          error: "Impossible de quitter le salon",
+          message: "Vous êtes le dernier administrateur de ce salon. Vous devez d'abord promouvoir un autre membre comme administrateur avant de pouvoir quitter, ou supprimer le salon.",
+          reason: "LAST_ADMIN"
+        }, { status: 403 });
       }
     }
 
@@ -70,7 +92,10 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({ success: true, message: "You have left the chat room" });
+    return NextResponse.json({ 
+      success: true, 
+      message: "Vous avez quitté le salon avec succès." 
+    });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to leave chat room" }, { status: 500 });
