@@ -16,17 +16,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "chatRoomId required" }, { status: 400 });
     }
 
-    // Verify room exists
+    // Verify room exists and get active admin count
     const room = await prisma.chatRoom.findUnique({
-      where: { id: chatRoomId },
-      include: {
-        participants: {
-          where: { 
-            role: "ADMIN",
-            leftAt: null
-          }
-        }
-      }
+      where: { id: chatRoomId }
     });
 
     if (!room) {
@@ -49,10 +41,20 @@ export async function POST(req: Request) {
     }
 
     // Prevent last admin from leaving
-    if (participant.role === "ADMIN" && room.participants.length === 1) {
-      return NextResponse.json({ 
-        error: "Cannot leave: You are the last admin. Please assign another admin first or delete the room." 
-      }, { status: 400 });
+    if (participant.role === "ADMIN") {
+      const activeAdminCount = await prisma.chatRoomParticipant.count({
+        where: {
+          chatRoomId,
+          role: "ADMIN",
+          leftAt: null
+        }
+      });
+
+      if (activeAdminCount === 1) {
+        return NextResponse.json({ 
+          error: "Cannot leave: You are the last admin. Please assign another admin first or delete the room." 
+        }, { status: 400 });
+      }
     }
 
     // Mark participant as left (soft delete)
