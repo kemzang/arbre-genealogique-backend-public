@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "chatRoomId required" }, { status: 400 });
     }
 
-    const chatRoomId = parseInt(chatRoomIdParam);
+    const chatRoomId = chatRoomIdParam;
 
     // Verify chat room exists
     const room = await prisma.chatRoom.findUnique({ 

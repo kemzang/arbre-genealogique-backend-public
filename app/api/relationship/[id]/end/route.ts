@@ -8,7 +8,7 @@ export async function PATCH(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
     const user = await getUserFromRequest(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     

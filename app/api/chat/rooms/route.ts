@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     if (!familyIdParam) {
       return NextResponse.json({ error: "familyId required" }, { status: 400 });
     }
-    const familyId = Number(familyIdParam);
+    const familyId = familyIdParam;
 
     const user = await getUserFromRequest(req);
     if (!user) {
@@ -62,10 +62,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const familyId: number = body.familyId;
+    const familyId: string = body.familyId;
     const name: string = body.name;
     const isPrivate: boolean = body.isPrivate || false;
-    const participantIds: number[] = body.participantIds || [];
+    const participantIds: string[] = body.participantIds || [];
 
     if (!familyId || !name) {
       return NextResponse.json({ error: "familyId and name required" }, { status: 400 });

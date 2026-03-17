@@ -30,12 +30,12 @@ export async function GET(req: Request) {
       }
     });
 
-    const familyActivity: Record<number, number> = {};
+    const familyActivity: Record<string, number> = {};
     messagesByFamily.forEach(room => {
       familyActivity[room.familyId] = (familyActivity[room.familyId] || 0) + room._count.messages;
     });
 
-    const activeFamilyIds = Object.keys(familyActivity).map(Number);
+    const activeFamilyIds = Object.keys(familyActivity);
     
     const sortedFamilies = await prisma.family.findMany({
       where: { id: { in: activeFamilyIds } },

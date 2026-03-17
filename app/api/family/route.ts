@@ -58,6 +58,16 @@ export async function POST(req: Request) {
       },
     });
 
+    // Créer automatiquement une Person liée au créateur dans l'arbre
+    await prisma.person.create({
+      data: {
+        familyId: family.id,
+        firstName: user.displayName || user.email.split("@")[0],
+        profilePictureUrl: user.profilePictureUrl,
+        linkedUserId: user.id,
+      },
+    });
+
     return NextResponse.json(family, { status: 201 });
   } catch (err) {
     console.error(err);

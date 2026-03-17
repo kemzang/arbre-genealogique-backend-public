@@ -9,7 +9,7 @@ export async function getUserFromRequest(req: Request) {
     const secret = process.env.JWT_SECRET;
     if (!secret) return null;
     const decoded = jwt.verify(token, secret) as {
-      sub?: number;
+      sub?: string;
       email?: string;
     } | null;
     if (!decoded?.sub) return null;

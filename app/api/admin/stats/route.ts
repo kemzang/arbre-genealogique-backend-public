@@ -95,7 +95,7 @@ export async function GET(req: Request) {
         where: { sentAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
       }),
       newMedia: await prisma.media.count({
-        where: { id: { gte: await getRecentMediaThreshold() } }
+        where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
       })
     };
 
@@ -141,15 +141,6 @@ export async function GET(req: Request) {
     console.error(err);
     return NextResponse.json({ error: "Failed to fetch statistics" }, { status: 500 });
   }
-}
-
-async function getRecentMediaThreshold() {
-  const recentDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const recentMedia = await prisma.media.findFirst({
-    where: { id: { gte: 1 } },
-    orderBy: { id: 'desc' }
-  });
-  return recentMedia ? recentMedia.id - 100 : 0; // Approximation
 }
 
 async function getMonthlyGrowth() {

@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@family.com';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@gmail.com';
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
   console.log('🌱 Stratégie de peuplement : Vérification du Super Admin...');

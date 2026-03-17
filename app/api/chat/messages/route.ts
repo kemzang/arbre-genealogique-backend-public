@@ -5,7 +5,7 @@ import { getUserFromRequest } from "@/lib/auth";
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const chatRoomId = Number(url.searchParams.get("chatRoomId"));
+    const chatRoomId = url.searchParams.get("chatRoomId");
     if (!chatRoomId)
       return NextResponse.json(
         { error: "chatRoomId required" },

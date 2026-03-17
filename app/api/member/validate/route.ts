@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const targetMemberId: number = body.targetMemberId;
+    const targetMemberId: string = body.targetMemberId;
     const vote: "APPROVE" | "REJECT" = body.vote;
     if (!targetMemberId || !vote)
       return NextResponse.json(

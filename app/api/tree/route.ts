@@ -6,8 +6,8 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const familyIdParam = url.searchParams.get("familyId");
-    let familyId: number | undefined = familyIdParam
-      ? Number(familyIdParam)
+    let familyId: string | undefined = familyIdParam
+      ? familyIdParam
       : undefined;
 
     const user = await getUserFromRequest(req);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
 // Configuration de la taille maximale pour les uploads (100MB)
@@ -33,9 +33,9 @@ export async function POST(req: Request) {
     const eventIdStr = formData.get("eventId") as string | null;
     const mediaType = (formData.get("mediaType") as "IMAGE" | "VIDEO" | "FILE") || "IMAGE";
 
-    const familyId = familyIdStr ? parseInt(familyIdStr) : null;
-    const personId = personIdStr ? parseInt(personIdStr) : undefined;
-    const eventId = eventIdStr ? parseInt(eventIdStr) : undefined;
+    const familyId = familyIdStr ? familyIdStr : null;
+    const personId = personIdStr ? personIdStr : undefined;
+    const eventId = eventIdStr ? eventIdStr : undefined;
 
     console.log("🔍 Validation:", { 
       fileName: file?.name, 

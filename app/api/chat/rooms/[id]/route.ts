@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
 
     const user = await getUserFromRequest(req);
     if (!user) {

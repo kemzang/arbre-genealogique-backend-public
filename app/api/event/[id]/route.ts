@@ -5,9 +5,9 @@ import { getUserFromRequest } from "@/lib/auth";
 /**
  * Helper to check if two persons are in the same kinship branch.
  */
-async function belongsToBranch(personId: number, targetPersonId: number): Promise<boolean> {
+async function belongsToBranch(personId: string, targetPersonId: string): Promise<boolean> {
     if (personId === targetPersonId) return true;
-    let visited = new Set<number>();
+    let visited = new Set<string>();
     let queue = [personId];
     visited.add(personId);
     let depth = 0;
@@ -41,7 +41,7 @@ export async function GET(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
     const user = await getUserFromRequest(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -106,7 +106,7 @@ export async function PATCH(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
     const user = await getUserFromRequest(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -128,17 +128,17 @@ export async function PATCH(
         eventDate: eventDate ? new Date(eventDate) : undefined,
         location: location ?? undefined,
         visibility: visibility ?? undefined,
-        targetPersonId: visibility === "BRANCH" && targetPersonId ? parseInt(targetPersonId) : (visibility && visibility !== "BRANCH" ? null : undefined),
+        targetPersonId: visibility === "BRANCH" && targetPersonId ? targetPersonId : (visibility && visibility !== "BRANCH" ? null : undefined),
         // Update families
         sharedFamilies: familyIds ? {
             deleteMany: {},
-            create: familyIds.map((fid: any) => ({ familyId: parseInt(fid) }))
+            create: familyIds.map((fid: any) => ({ familyId: fid }))
         } : undefined,
         // Update guests
         guests: visibility === "RESTRICTED" && guestPersonIds 
           ? {
               deleteMany: {},
-              create: guestPersonIds.map((pid: any) => ({ personId: parseInt(pid) })),
+              create: guestPersonIds.map((pid: any) => ({ personId: pid })),
             } 
           : (visibility && visibility !== "RESTRICTED" ? { deleteMany: {} } : undefined),
       }
@@ -158,7 +158,7 @@ export async function DELETE(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
     const user = await getUserFromRequest(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

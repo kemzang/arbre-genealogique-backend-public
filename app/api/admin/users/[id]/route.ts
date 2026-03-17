@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
     const superAdmin = await getSuperAdminFromRequest(req);
     
     if (!superAdmin) {
@@ -87,7 +87,7 @@ export async function PATCH(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
     const superAdmin = await getSuperAdminFromRequest(req);
     
     if (!superAdmin) {
@@ -146,7 +146,7 @@ export async function DELETE(
 ) {
   try {
     const { id: idStr } = await params;
-    const id = parseInt(idStr);
+    const id = idStr;
     const superAdmin = await getSuperAdminFromRequest(req);
     
     if (!superAdmin) {

@@ -22,7 +22,7 @@ async function getUserFromToken(req: NextApiRequest) {
     const secret = process.env.JWT_SECRET;
     if (!secret) return null;
 
-    const decoded = jwt.verify(token, secret) as { sub?: number };
+    const decoded = jwt.verify(token, secret) as { sub?: string };
     if (!decoded?.sub) return null;
 
     const user = await prisma.user.findUnique({ where: { id: decoded.sub } });
@@ -83,9 +83,9 @@ export default async function handler(
       return res.status(400).json({ error: 'familyId and file required' });
     }
 
-    const familyId = parseInt(familyIdStr);
-    const personId = personIdStr ? parseInt(personIdStr) : undefined;
-    const eventId = eventIdStr ? parseInt(eventIdStr) : undefined;
+    const familyId = familyIdStr;
+    const personId = personIdStr || undefined;
+    const eventId = eventIdStr || undefined;
 
     console.log('🔍 Validation:', {
       fileName: file.originalFilename,

@@ -49,6 +49,8 @@ export async function POST(req: Request) {
       // 1. Update request status
       // 2. Create family connection
       // 3. Create the actual relationship between the two persons
+      const [familyAId, familyBId] = [mergeRequest.sourceFamilyId, mergeRequest.targetFamilyId].sort();
+      
       const [updatedRequest, connection, relationship] = await prisma.$transaction([
         prisma.familyMergeRequest.update({
           where: { id: requestId },
@@ -57,14 +59,14 @@ export async function POST(req: Request) {
         prisma.familyConnection.upsert({
           where: {
             familyAId_familyBId: {
-              familyAId: Math.min(mergeRequest.sourceFamilyId, mergeRequest.targetFamilyId),
-              familyBId: Math.max(mergeRequest.sourceFamilyId, mergeRequest.targetFamilyId)
+              familyAId,
+              familyBId
             }
           },
           update: {},
           create: {
-            familyAId: Math.min(mergeRequest.sourceFamilyId, mergeRequest.targetFamilyId),
-            familyBId: Math.max(mergeRequest.sourceFamilyId, mergeRequest.targetFamilyId)
+            familyAId,
+            familyBId
           }
         }),
         // Create the actual relationship between the two persons

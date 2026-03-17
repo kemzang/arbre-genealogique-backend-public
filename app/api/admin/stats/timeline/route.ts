@@ -37,8 +37,8 @@ export async function GET(req: Request) {
         select: { sentAt: true }
       }),
       prisma.media.findMany({
-        where: { id: { gte: 1 } }, // Using ID for speed if media table is huge, but createdAt is better
-        select: { id: true } // Media doesn't have createdAt in schema, let's check
+        where: { createdAt: { gte: startDate } },
+        select: { createdAt: true }
       })
     ]);
 
@@ -60,9 +60,8 @@ export async function GET(req: Request) {
         users: formatData(users, 'createdAt'),
         families: formatData(families, 'createdAt'),
         messages: formatData(messages, 'sentAt'),
-        // Media usually follows messages or has its own upload date if added to schema
-        // In our current schema, Media doesn't have createdAt, so we'll skip or use ID as proxy
-        media: [] 
+        // Media usually follows messages or has its own upload date
+        media: formatData(media, 'createdAt')
       }
     });
   } catch (err) {

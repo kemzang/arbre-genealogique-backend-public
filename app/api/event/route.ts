@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const memberships = await prisma.member.findMany({
       where: {
         userId: user.id,
-        familyId: { in: familyIds.map((id: any) => parseInt(id)) },
+        familyId: { in: familyIds },
         status: "ACTIVE",
       },
     });
@@ -51,18 +51,18 @@ export async function POST(req: Request) {
         eventDate: eventDate ? new Date(eventDate) : null,
         location,
         visibility,
-        targetPersonId: visibility === "BRANCH" ? parseInt(targetPersonId) : null,
+        targetPersonId: visibility === "BRANCH" ? targetPersonId : null,
         // Shared with these families
         sharedFamilies: {
             create: familyIds.map((fid: any) => ({
-                familyId: parseInt(fid)
+                familyId: fid
             }))
         },
         // If restricted, add guests
         guests: visibility === "RESTRICTED" && guestPersonIds.length > 0
           ? {
               create: guestPersonIds.map((pid: any) => ({
-                personId: parseInt(pid),
+                personId: pid,
               })),
             }
           : undefined,

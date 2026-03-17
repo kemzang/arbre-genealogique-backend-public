@@ -33,21 +33,22 @@ CREATE TYPE "RelationshipStatus" AS ENUM ('ACTIVE', 'ENDED', 'DECEASED');
 
 -- CreateTable
 CREATE TABLE "users" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
     "display_name" TEXT,
     "profile_picture_url" TEXT,
     "is_super_admin" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "password_reset_tokens" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "expires_at" TIMESTAMP(3) NOT NULL,
     "used_at" TIMESTAMP(3),
@@ -57,22 +58,24 @@ CREATE TABLE "password_reset_tokens" (
 
 -- CreateTable
 CREATE TABLE "families" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "family_name" TEXT NOT NULL,
     "logo_url" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "families_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "members" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "family_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "family_id" TEXT NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'VIEWER',
     "status" "MemberStatus" NOT NULL DEFAULT 'PENDING',
     "joined_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
     "application_data" TEXT,
 
     CONSTRAINT "members_pkey" PRIMARY KEY ("id")
@@ -80,9 +83,9 @@ CREATE TABLE "members" (
 
 -- CreateTable
 CREATE TABLE "membership_validations" (
-    "id" SERIAL NOT NULL,
-    "target_member_id" INTEGER NOT NULL,
-    "validator_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "target_member_id" TEXT NOT NULL,
+    "validator_id" TEXT NOT NULL,
     "vote_type" "VoteType" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -91,8 +94,8 @@ CREATE TABLE "membership_validations" (
 
 -- CreateTable
 CREATE TABLE "persons" (
-    "id" SERIAL NOT NULL,
-    "family_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "family_id" TEXT NOT NULL,
     "first_name" TEXT,
     "last_name" TEXT,
     "birth_date" TIMESTAMP(3),
@@ -100,16 +103,18 @@ CREATE TABLE "persons" (
     "gender" "Gender",
     "bio" TEXT,
     "profile_picture_url" TEXT,
-    "linked_user_id" INTEGER,
+    "linked_user_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "persons_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "relationships" (
-    "id" SERIAL NOT NULL,
-    "person_a_id" INTEGER NOT NULL,
-    "person_b_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "person_a_id" TEXT NOT NULL,
+    "person_b_id" TEXT NOT NULL,
     "type" "RelationshipType" NOT NULL,
     "is_biological" BOOLEAN NOT NULL DEFAULT true,
     "status" "RelationshipStatus" NOT NULL DEFAULT 'ACTIVE',
@@ -117,20 +122,24 @@ CREATE TABLE "relationships" (
     "end_date" TIMESTAMP(3),
     "end_reason" TEXT,
     "notes" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "relationships_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "family_merge_requests" (
-    "id" SERIAL NOT NULL,
-    "source_family_id" INTEGER NOT NULL,
-    "target_family_id" INTEGER NOT NULL,
-    "requester_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "source_family_id" TEXT NOT NULL,
+    "target_family_id" TEXT NOT NULL,
+    "requester_id" TEXT NOT NULL,
     "status" "RequestStatus" NOT NULL DEFAULT 'PENDING',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "source_person_id" INTEGER NOT NULL,
-    "target_person_id" INTEGER NOT NULL,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "source_person_id" TEXT NOT NULL,
+    "target_person_id" TEXT NOT NULL,
     "relationship_type" "RelationshipType" NOT NULL,
     "justification" TEXT,
 
@@ -139,9 +148,9 @@ CREATE TABLE "family_merge_requests" (
 
 -- CreateTable
 CREATE TABLE "family_connections" (
-    "id" SERIAL NOT NULL,
-    "family_a_id" INTEGER NOT NULL,
-    "family_b_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "family_a_id" TEXT NOT NULL,
+    "family_b_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "family_connections_pkey" PRIMARY KEY ("id")
@@ -149,80 +158,88 @@ CREATE TABLE "family_connections" (
 
 -- CreateTable
 CREATE TABLE "chat_rooms" (
-    "id" SERIAL NOT NULL,
-    "family_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "family_id" TEXT NOT NULL,
     "name" TEXT,
     "description" TEXT,
     "avatar_url" TEXT,
     "channel_type" "ChannelType" NOT NULL DEFAULT 'PUBLIC',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "creator_id" INTEGER,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "creator_id" TEXT,
 
     CONSTRAINT "chat_rooms_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "chat_room_participants" (
-    "id" SERIAL NOT NULL,
-    "chat_room_id" INTEGER NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "chat_room_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
     "role" "ChatRole" NOT NULL DEFAULT 'MEMBER',
     "joined_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "left_at" TIMESTAMP(3),
 
     CONSTRAINT "chat_room_participants_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "messages" (
-    "id" SERIAL NOT NULL,
-    "chat_room_id" INTEGER NOT NULL,
-    "sender_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "chat_room_id" TEXT NOT NULL,
+    "sender_id" TEXT NOT NULL,
     "content" TEXT,
     "sent_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "messages_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "family_events" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "title" TEXT,
     "event_date" TIMESTAMP(3),
     "location" TEXT,
-    "creator_id" INTEGER,
+    "creator_id" TEXT,
     "visibility" "EventVisibility" NOT NULL DEFAULT 'PUBLIC',
-    "target_person_id" INTEGER,
+    "target_person_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "family_events_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "family_event_families" (
-    "event_id" INTEGER NOT NULL,
-    "family_id" INTEGER NOT NULL,
+    "event_id" TEXT NOT NULL,
+    "family_id" TEXT NOT NULL,
 
     CONSTRAINT "family_event_families_pkey" PRIMARY KEY ("event_id","family_id")
 );
 
 -- CreateTable
 CREATE TABLE "event_guests" (
-    "id" SERIAL NOT NULL,
-    "event_id" INTEGER NOT NULL,
-    "person_id" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "event_id" TEXT NOT NULL,
+    "person_id" TEXT NOT NULL,
 
     CONSTRAINT "event_guests_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "media" (
-    "id" SERIAL NOT NULL,
-    "family_id" INTEGER NOT NULL,
-    "uploader_id" INTEGER NOT NULL,
-    "person_id" INTEGER,
-    "event_id" INTEGER,
-    "message_id" INTEGER,
+    "id" TEXT NOT NULL,
+    "family_id" TEXT NOT NULL,
+    "uploader_id" TEXT NOT NULL,
+    "person_id" TEXT,
+    "event_id" TEXT,
+    "message_id" TEXT,
     "url_path" TEXT NOT NULL,
     "media_type" "MediaType" NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "media_pkey" PRIMARY KEY ("id")
 );

@@ -7,14 +7,14 @@ import { getUserFromRequest } from "@/lib/auth";
  * For now, we'll use a simplified version: if they share any common ancestor 
  * or one is an ancestor of the other.
  */
-async function belongsToBranch(personId: number, targetPersonId: number): Promise<boolean> {
+async function belongsToBranch(personId: string, targetPersonId: string): Promise<boolean> {
     if (personId === targetPersonId) return true;
     
     // We'll perform a BFS/DFS to find if they are related.
     // In a family tree, most active members of a "branch" are within a few degrees of separation.
     // To be efficient, we'll check up to 5 levels of separation.
     
-    let visited = new Set<number>();
+    let visited = new Set<string>();
     let queue = [personId];
     visited.add(personId);
     
@@ -57,7 +57,7 @@ export async function GET(
 ) {
   try {
     const { familyId: familyIdStr } = await params;
-    const familyId = parseInt(familyIdStr);
+    const familyId = familyIdStr;
 
     const user = await getUserFromRequest(req);
     if (!user) {

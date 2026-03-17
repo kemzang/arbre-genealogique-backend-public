@@ -16,11 +16,11 @@ export async function GET(req: Request) {
     }
 
     // Check membership
-    let targetFamilyId = familyId ? parseInt(familyId) : null;
+    let targetFamilyId = familyId ? familyId : null;
     
     if (personId) {
       const person = await prisma.person.findUnique({
-        where: { id: parseInt(personId) },
+        where: { id: personId },
         select: { familyId: true }
       });
       if (!person) return NextResponse.json({ error: "Person not found" }, { status: 404 });
@@ -41,15 +41,15 @@ export async function GET(req: Request) {
     if (personId) {
       whereClause = {
         OR: [
-          { personAId: parseInt(personId) },
-          { personBId: parseInt(personId) }
+          { personAId: personId },
+          { personBId: personId }
         ]
       };
     } else if (familyId) {
       whereClause = {
         OR: [
-          { personA: { familyId: parseInt(familyId) } },
-          { personB: { familyId: parseInt(familyId) } }
+          { personA: { familyId: familyId } },
+          { personB: { familyId: familyId } }
         ]
       };
     }

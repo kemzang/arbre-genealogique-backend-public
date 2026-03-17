@@ -9,9 +9,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const chatRoomId: number = body.chatRoomId;
+    const chatRoomId: string = body.chatRoomId;
     const content: string = body.content;
-    const attachmentIds: number[] = body.attachmentIds || [];
+    const attachmentIds: string[] = body.attachmentIds || [];
 
     if (!chatRoomId || (!content && attachmentIds.length === 0))
       return NextResponse.json(
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         senderId: user.id,
         content,
         attachments: attachmentIds.length > 0 ? {
-          connect: attachmentIds.map(id => ({ id }))
+          connect: attachmentIds.map((id: string) => ({ id }))
         } : undefined
       },
       include: {

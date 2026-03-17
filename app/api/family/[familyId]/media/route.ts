@@ -12,7 +12,7 @@ export async function GET(
     if (!user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const fId = Number(familyId);
+    const fId = familyId;
     if (!fId)
       return NextResponse.json({ error: "Invalid family ID" }, { status: 400 });
 
@@ -36,7 +36,7 @@ export async function GET(
       }
     }
     if (chatRoomId) {
-       where.message = { chatRoomId: Number(chatRoomId) };
+       where.message = { chatRoomId: chatRoomId };
     }
 
     const media = await prisma.media.findMany({

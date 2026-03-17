@@ -8,13 +8,14 @@ datasource db {
 }
 
 model User {
-  id                     Int                    @id @default(autoincrement())
+  id                     String                 @id @default(uuid())
   email                  String                 @unique
   passwordHash           String                 @map("password_hash")
   displayName            String?                @map("display_name")
   profilePictureUrl      String?                @map("profile_picture_url")
   isSuperAdmin           Boolean                @default(false) @map("is_super_admin")
   createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
   chatRoomParticipations ChatRoomParticipant[]
   createdChatRooms       ChatRoom[]             @relation("ChatRoomCreator")
   createdEvents          FamilyEvent[]          @relation("EventCreator")
@@ -30,8 +31,8 @@ model User {
 }
 
 model PasswordResetToken {
-  id        Int       @id @default(autoincrement())
-  userId    Int       @map("user_id")
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
   token     String    @unique
   expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
@@ -43,17 +44,17 @@ model PasswordResetToken {
 }
 
 model Family {
-  id           Int                   @id @default(autoincrement())
+  id           String                @id @default(uuid())
   familyName   String                @map("family_name")
   logoUrl      String?               @map("logo_url")
   createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
   chatRooms    ChatRoom[]
   media        Media[]
   members      Member[]
   persons      Person[]
   sharedEvents FamilyEventOnFamily[]
-  
-  // Relations for family connections and mergers
+
   outgoingMergeRequests FamilyMergeRequest[] @relation("SourceFamily")
   incomingMergeRequests FamilyMergeRequest[] @relation("TargetFamily")
   connectionsA          FamilyConnection[]   @relation("FamilyA")
@@ -63,12 +64,13 @@ model Family {
 }
 
 model Member {
-  id              Int                    @id @default(autoincrement())
-  userId          Int                    @map("user_id")
-  familyId        Int                    @map("family_id")
+  id              String                 @id @default(uuid())
+  userId          String                 @map("user_id")
+  familyId        String                 @map("family_id")
   role            Role                   @default(VIEWER)
   status          MemberStatus           @default(PENDING)
   joinedAt        DateTime               @default(now()) @map("joined_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
   applicationData String?                @map("application_data") @db.Text
   family          Family                 @relation(fields: [familyId], references: [id], onDelete: Cascade)
   user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -80,9 +82,9 @@ model Member {
 }
 
 model MembershipValidation {
-  id             Int      @id @default(autoincrement())
-  targetMemberId Int      @map("target_member_id")
-  validatorId    Int      @map("validator_id")
+  id             String   @id @default(uuid())
+  targetMemberId String   @map("target_member_id")
+  validatorId    String   @map("validator_id")
   voteType       VoteType @map("vote_type")
   createdAt      DateTime @default(now()) @map("created_at")
   targetMember   Member   @relation("targetValidations", fields: [targetMemberId], references: [id], onDelete: Cascade)
@@ -94,8 +96,8 @@ model MembershipValidation {
 }
 
 model Person {
-  id                Int            @id @default(autoincrement())
-  familyId          Int            @map("family_id")
+  id                String         @id @default(uuid())
+  familyId          String         @map("family_id")
   firstName         String?        @map("first_name")
   lastName          String?        @map("last_name")
   birthDate         DateTime?      @map("birth_date")
@@ -103,7 +105,9 @@ model Person {
   gender            Gender?
   bio               String?
   profilePictureUrl String?        @map("profile_picture_url")
-  linkedUserId      Int?           @map("linked_user_id")
+  linkedUserId      String?        @map("linked_user_id")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
   eventInvitations  EventGuest[]
   media             Media[]
   family            Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
@@ -111,8 +115,6 @@ model Person {
   relationshipsA    Relationship[] @relation("relA")
   relationshipsB    Relationship[] @relation("relB")
   targetEvents      FamilyEvent[]  @relation("EventTargetBranch")
-  
-  // Relations pour les demandes de fusion
   sourceRequests    FamilyMergeRequest[] @relation("SourcePersonRequests")
   targetRequests    FamilyMergeRequest[] @relation("TargetPersonRequests")
 
@@ -122,19 +124,19 @@ model Person {
 }
 
 model Relationship {
-  id           Int              @id @default(autoincrement())
-  personAId    Int              @map("person_a_id")
-  personBId    Int              @map("person_b_id")
+  id           String           @id @default(uuid())
+  personAId    String           @map("person_a_id")
+  personBId    String           @map("person_b_id")
   type         RelationshipType @map("type")
   isBiological Boolean          @default(true) @map("is_biological")
-  
-  // Nouveaux champs pour l'historique et le statut
   status       RelationshipStatus @default(ACTIVE) @map("status")
-  startDate    DateTime?        @map("start_date")    // Date de début (mariage, naissance, etc.)
-  endDate      DateTime?        @map("end_date")      // Date de fin (divorce, décès, etc.)
-  endReason    String?          @map("end_reason")    // Raison de la fin (divorce, décès, etc.)
-  notes        String?          @map("notes")         // Notes additionnelles
-  deletedAt    DateTime?        @map("deleted_at")    // Soft delete
+  startDate    DateTime?        @map("start_date")
+  endDate      DateTime?        @map("end_date")
+  endReason    String?          @map("end_reason")
+  notes        String?          @map("notes")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  deletedAt    DateTime?        @map("deleted_at")
   
   personA      Person           @relation("relA", fields: [personAId], references: [id], onDelete: Cascade)
   personB      Person           @relation("relB", fields: [personBId], references: [id], onDelete: Cascade)
@@ -145,18 +147,17 @@ model Relationship {
 }
 
 model FamilyMergeRequest {
-  id               Int           @id @default(autoincrement())
-  sourceFamilyId   Int           @map("source_family_id")
-  targetFamilyId   Int           @map("target_family_id")
-  requesterId      Int           @map("requester_id")
+  id               String        @id @default(uuid())
+  sourceFamilyId   String        @map("source_family_id")
+  targetFamilyId   String        @map("target_family_id")
+  requesterId      String        @map("requester_id")
   status           RequestStatus @default(PENDING)
   createdAt        DateTime      @default(now()) @map("created_at")
-  
-  // Nouvelles colonnes pour spécifier la relation concrète
-  sourcePersonId   Int           @map("source_person_id")  // Personne de la famille source
-  targetPersonId   Int           @map("target_person_id")  // Personne de la famille cible
-  relationshipType RelationshipType @map("relationship_type") // Type de relation (UNION, PARENTAL, etc.)
-  justification    String?       @map("justification")     // Explication de la demande
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  sourcePersonId   String        @map("source_person_id")
+  targetPersonId   String        @map("target_person_id")
+  relationshipType RelationshipType @map("relationship_type")
+  justification    String?       @map("justification")
   
   sourceFamily     Family        @relation("SourceFamily", fields: [sourceFamilyId], references: [id], onDelete: Cascade)
   targetFamily     Family        @relation("TargetFamily", fields: [targetFamilyId], references: [id], onDelete: Cascade)
@@ -168,9 +169,9 @@ model FamilyMergeRequest {
 }
 
 model FamilyConnection {
-  id        Int      @id @default(autoincrement())
-  familyAId Int      @map("family_a_id")
-  familyBId Int      @map("family_b_id")
+  id        String   @id @default(uuid())
+  familyAId String   @map("family_a_id")
+  familyBId String   @map("family_b_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   familyA   Family   @relation("FamilyA", fields: [familyAId], references: [id], onDelete: Cascade)
@@ -181,14 +182,15 @@ model FamilyConnection {
 }
 
 model ChatRoom {
-  id           Int                   @id @default(autoincrement())
-  familyId     Int                   @map("family_id")
+  id           String                @id @default(uuid())
+  familyId     String                @map("family_id")
   name         String?
   description  String?
   avatarUrl    String?               @map("avatar_url")
   channelType  ChannelType           @default(PUBLIC) @map("channel_type")
   createdAt    DateTime              @default(now()) @map("created_at")
-  creatorId    Int?                  @map("creator_id")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+  creatorId    String?               @map("creator_id")
   participants ChatRoomParticipant[]
   creator      User?                 @relation("ChatRoomCreator", fields: [creatorId], references: [id])
   family       Family                @relation(fields: [familyId], references: [id], onDelete: Cascade)
@@ -200,9 +202,9 @@ model ChatRoom {
 }
 
 model ChatRoomParticipant {
-  id         Int       @id @default(autoincrement())
-  chatRoomId Int       @map("chat_room_id")
-  userId     Int       @map("user_id")
+  id         String    @id @default(uuid())
+  chatRoomId String    @map("chat_room_id")
+  userId     String    @map("user_id")
   role       ChatRole  @default(MEMBER)
   joinedAt   DateTime  @default(now()) @map("joined_at")
   leftAt     DateTime? @map("left_at")
@@ -215,11 +217,12 @@ model ChatRoomParticipant {
 }
 
 model Message {
-  id          Int      @id @default(autoincrement())
-  chatRoomId  Int      @map("chat_room_id")
-  senderId    Int      @map("sender_id")
+  id          String   @id @default(uuid())
+  chatRoomId  String   @map("chat_room_id")
+  senderId    String   @map("sender_id")
   content     String?
   sentAt      DateTime @default(now()) @map("sent_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   attachments Media[]
   chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   sender      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
@@ -230,13 +233,15 @@ model Message {
 }
 
 model FamilyEvent {
-  id             Int             @id @default(autoincrement())
+  id             String          @id @default(uuid())
   title          String?
   eventDate      DateTime?       @map("event_date")
   location       String?         @map("location")
-  creatorId      Int?            @map("creator_id")
+  creatorId      String?         @map("creator_id")
   visibility     EventVisibility @default(PUBLIC)
-  targetPersonId Int?            @map("target_person_id")
+  targetPersonId String?         @map("target_person_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
   deletedAt      DateTime?       @map("deleted_at")
   
   creator        User?           @relation("EventCreator", fields: [creatorId], references: [id])
@@ -252,8 +257,8 @@ model FamilyEvent {
 }
 
 model FamilyEventOnFamily {
-  eventId  Int    @map("event_id")
-  familyId Int    @map("family_id")
+  eventId  String @map("event_id")
+  familyId String @map("family_id")
   event    FamilyEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
   family   Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
 
@@ -262,9 +267,9 @@ model FamilyEventOnFamily {
 }
 
 model EventGuest {
-  id       Int         @id @default(autoincrement())
-  eventId  Int         @map("event_id")
-  personId Int         @map("person_id")
+  id       String      @id @default(uuid())
+  eventId  String      @map("event_id")
+  personId String      @map("person_id")
   event    FamilyEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
   person   Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
 
@@ -274,14 +279,16 @@ model EventGuest {
 }
 
 model Media {
-  id         Int          @id @default(autoincrement())
-  familyId   Int          @map("family_id")
-  uploaderId Int          @map("uploader_id")
-  personId   Int?         @map("person_id")
-  eventId    Int?         @map("event_id")
-  messageId  Int?         @map("message_id")
+  id         String       @id @default(uuid())
+  familyId   String       @map("family_id")
+  uploaderId String       @map("uploader_id")
+  personId   String?      @map("person_id")
+  eventId    String?      @map("event_id")
+  messageId  String?      @map("message_id")
   urlPath    String       @map("url_path")
   mediaType  MediaType    @map("media_type")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
   event      FamilyEvent? @relation(fields: [eventId], references: [id])
   family     Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
   message    Message?     @relation(fields: [messageId], references: [id])
@@ -355,7 +362,7 @@ enum ChatRole {
 }
 
 enum RelationshipStatus {
-  ACTIVE      // Relation active (marié, vivant, etc.)
-  ENDED       // Relation terminée (divorcé, séparé, etc.)
-  DECEASED    // Une des personnes est décédée
+  ACTIVE
+  ENDED
+  DECEASED
 }
