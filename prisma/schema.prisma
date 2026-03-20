@@ -108,6 +108,7 @@ model Person {
   linkedUserId      String?        @map("linked_user_id")
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
+  deletedAt         DateTime?      @map("deleted_at")
   eventInvitations  EventGuest[]
   media             Media[]
   family            Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
@@ -190,6 +191,7 @@ model ChatRoom {
   channelType  ChannelType           @default(PUBLIC) @map("channel_type")
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
+  deletedAt    DateTime?             @map("deleted_at")
   creatorId    String?               @map("creator_id")
   participants ChatRoomParticipant[]
   creator      User?                 @relation("ChatRoomCreator", fields: [creatorId], references: [id])
@@ -207,6 +209,7 @@ model ChatRoomParticipant {
   userId     String    @map("user_id")
   role       ChatRole  @default(MEMBER)
   joinedAt   DateTime  @default(now()) @map("joined_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
   leftAt     DateTime? @map("left_at")
   chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -217,12 +220,13 @@ model ChatRoomParticipant {
 }
 
 model Message {
-  id          String   @id @default(uuid())
-  chatRoomId  String   @map("chat_room_id")
-  senderId    String   @map("sender_id")
+  id          String    @id @default(uuid())
+  chatRoomId  String    @map("chat_room_id")
+  senderId    String    @map("sender_id")
   content     String?
-  sentAt      DateTime @default(now()) @map("sent_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  sentAt      DateTime  @default(now()) @map("sent_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
   attachments Media[]
   chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   sender      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)

@@ -61,7 +61,7 @@ export async function GET(req: Request) {
     }
 
     const persons = await prisma.person.findMany({ 
-        where: { familyId: { in: allFamilyIds } } 
+        where: { familyId: { in: allFamilyIds }, deletedAt: null } 
     });
     
     const personIds = persons.map((p) => p.id);

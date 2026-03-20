@@ -29,6 +29,7 @@ export async function GET(req: Request) {
     const rooms = await prisma.chatRoom.findMany({
       where: {
         familyId,
+        deletedAt: null,
         participants: {
           some: { 
             userId: user.id,

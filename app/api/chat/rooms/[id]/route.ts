@@ -15,8 +15,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const room = await prisma.chatRoom.findUnique({
-      where: { id },
+    const room = await prisma.chatRoom.findFirst({
+      where: { id, deletedAt: null },
       include: {
         _count: { select: { messages: true } },
         participants: {

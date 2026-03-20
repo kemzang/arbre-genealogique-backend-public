@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const messages = await prisma.message.findMany({
-      where: { chatRoomId },
+      where: { chatRoomId, deletedAt: null },
       include: {
         sender: true, 
         attachments: true 

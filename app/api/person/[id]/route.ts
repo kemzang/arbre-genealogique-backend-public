@@ -42,9 +42,7 @@ export async function GET(
       }
     });
 
-    if (!person) return NextResponse.json({ error: "Person not found" }, { status: 404 });
-
-    // Check membership
+    if (!person || person.deletedAt) return NextResponse.json({ error: "Person not found" }, { status: 404 });
     const member = await prisma.member.findFirst({
       where: { userId: user.id, familyId: person.familyId, status: "ACTIVE" }
     });
@@ -190,7 +188,7 @@ export async function PATCH(
       where: { id }
     });
 
-    if (!person) return NextResponse.json({ error: "Person not found" }, { status: 404 });
+    if (!person || person.deletedAt) return NextResponse.json({ error: "Person not found" }, { status: 404 });
 
     // Check if user is an active member with ADMIN or EDITOR role
     const member = await prisma.member.findFirst({
