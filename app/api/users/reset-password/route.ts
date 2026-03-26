@@ -4,9 +4,12 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
+    const url = new URL(req.url);
+    const token = url.searchParams.get('token');
+    
     const body = await req.json();
-    const token: string | undefined = body?.token;
     const password: string | undefined = body?.password;
+    const confirmPassword: string | undefined = body?.confirmPassword;
 
     if (!token || typeof token !== "string") {
       return NextResponse.json(
@@ -18,6 +21,13 @@ export async function POST(req: Request) {
     if (!password || typeof password !== "string" || password.length < 8) {
       return NextResponse.json(
         { error: "Nouveau mot de passe invalide (minimum 8 caractères)" },
+        { status: 400 },
+      );
+    }
+
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { error: "Les mots de passe ne correspondent pas" },
         { status: 400 },
       );
     }
