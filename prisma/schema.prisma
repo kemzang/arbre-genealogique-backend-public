@@ -23,6 +23,7 @@ model User {
   members                Member[]
   validationsGiven       MembershipValidation[] @relation("ValidationsByUser")
   messages               Message[]
+  readMessages           Message[]              @relation("MessageReadReceipts")
   linkedPersons          Person[]               @relation("UserLinkedPersons")
   mergeRequests          FamilyMergeRequest[]
   passwordResetTokens    PasswordResetToken[]
@@ -230,6 +231,7 @@ model Message {
   attachments Media[]
   chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   sender      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  readBy      User[]   @relation("MessageReadReceipts")
 
   @@index([chatRoomId])
   @@index([senderId])

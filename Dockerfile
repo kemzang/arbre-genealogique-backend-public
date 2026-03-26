@@ -36,6 +36,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/socket-server.js ./
 COPY docker-start.sh ./
 # Fix Windows CRLF → LF so ./docker-start.sh runs in Alpine
 RUN sed -i 's/\r$//' docker-start.sh
@@ -46,6 +47,7 @@ RUN chmod +x docker-start.sh && chown -R node:node /app
 USER node
 
 EXPOSE 3000
+EXPOSE 3002
 
 # Start script
 CMD ["./docker-start.sh"]

@@ -11,6 +11,10 @@ npx prisma db push --accept-data-loss
 echo "🌱 Initialisation des données..."
 npx prisma db seed
 
-# Lancer l'app
-echo "✅ Serveur prêt sur le port 3000"
+# Lancer l'app WebSockets en tâche de fond
+echo "🔌 Démarrage du serveur WebSockets (port 3002)..."
+node socket-server.js &
+
+# Lancer l'app Next.js
+echo "✅ Serveur Next.js prêt sur le port 3000"
 node server.js
