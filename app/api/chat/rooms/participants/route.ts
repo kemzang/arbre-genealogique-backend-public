@@ -89,10 +89,10 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { chatRoomId, userIdToAdd } = body;
+    const { chatRoomId, userIdToAdd, userEmail } = body;
 
-    if (!chatRoomId || !userIdToAdd) {
-        return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    if (!chatRoomId || (!userIdToAdd && !userEmail)) {
+        return NextResponse.json({ error: "chatRoomId and either userIdToAdd or userEmail are required" }, { status: 400 });
     }
 
     // Verify requester IS admin of room
@@ -103,13 +103,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Forbidden: Only Admin can add members" }, { status: 403 });
     }
 
-    // Check if user to add is valid family active member
-    // First get chatroom family
     const room = await prisma.chatRoom.findUnique({ where: { id: chatRoomId } });
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
 
+    // Resolve user by email if userIdToAdd not provided
+    let resolvedUserId: string = userIdToAdd;
+    if (!resolvedUserId && userEmail) {
+        const foundUser = await prisma.user.findUnique({ where: { email: userEmail }, select: { id: true } });
+        if (!foundUser) {
+            return NextResponse.json({ error: "No user found with this email" }, { status: 404 });
+        }
+        resolvedUserId = foundUser.id;
+    }
+
     const targetUserInFamily = await prisma.member.findFirst({
-        where: { userId: userIdToAdd, familyId: room.familyId, status: "ACTIVE" }
+        where: { userId: resolvedUserId, familyId: room.familyId, status: "ACTIVE" }
     });
     if (!targetUserInFamily) {
         return NextResponse.json({ error: "User is not active member of this family" }, { status: 400 });
@@ -119,12 +127,12 @@ export async function POST(req: Request) {
     // Use upsert to avoid error if already there
     const participant = await prisma.chatRoomParticipant.upsert({
         where: {
-            chatRoomId_userId: { chatRoomId, userId: userIdToAdd }
+            chatRoomId_userId: { chatRoomId, userId: resolvedUserId }
         },
-        update: {}, // Do nothing if exists
+        update: { leftAt: null },
         create: {
             chatRoomId,
-            userId: userIdToAdd,
+            userId: resolvedUserId,
             role: "MEMBER"
         }
     });
