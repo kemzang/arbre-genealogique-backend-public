@@ -190,6 +190,7 @@ model ChatRoom {
   description  String?
   avatarUrl    String?               @map("avatar_url")
   channelType  ChannelType           @default(PUBLIC) @map("channel_type")
+  isDirect     Boolean               @default(false) @map("is_direct")
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
   deletedAt    DateTime?             @map("deleted_at")
